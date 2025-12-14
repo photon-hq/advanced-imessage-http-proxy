@@ -17,5 +17,8 @@ export function setupRoutes(app: any): void {
     setupServerRoutes(app)
 
     // Health check
-    app.get("/health", () => ({ ok: true, data: { status: "healthy" } }))
+    app.get("/health", () => ({ ok: true, data: { status: "healthy" } }), {
+        detail: { tags: ["Server"], summary: "Health check" },
+        security: [],
+    })
 }

@@ -1,6 +1,7 @@
 /**
  * Chat Routes
  */
+import { t } from "elysia"
 import { createHandler, withSdk, toChatGuid, fromChatGuid } from "../core/auth"
 
 export function setupChatRoutes(app: any): void {
@@ -19,7 +20,12 @@ export function setupChatRoutes(app: any): void {
                 lastMessageAt: c.lastMessage?.dateCreated,
             }))
         }
-    }))
+    }), {
+        query: t.Object({
+            limit: t.Optional(t.Numeric({ description: "Max number of chats to return", default: 50 })),
+        }),
+        detail: { tags: ["Chats"], summary: "List chats" },
+    })
 
     // GET /chats/:id - Get chat
     app.get("/chats/:id", createHandler(async (auth, { params }) => {
@@ -35,7 +41,7 @@ export function setupChatRoutes(app: any): void {
                 participants: chat.participants?.map((p: any) => p.address) || [],
             }
         }
-    }))
+    }), { detail: { tags: ["Chats"], summary: "Get chat details" } })
 
     // GET /chats/:id/messages - Get chat messages
     app.get("/chats/:id/messages", createHandler(async (auth, { params, query }) => {
@@ -52,42 +58,47 @@ export function setupChatRoutes(app: any): void {
                 sentAt: m.dateCreated,
             }))
         }
-    }))
+    }), {
+        query: t.Object({
+            limit: t.Optional(t.Numeric({ description: "Max number of messages to return", default: 50 })),
+        }),
+        detail: { tags: ["Chats"], summary: "Get chat messages" },
+    })
 
     // POST /chats/:id/read - Mark as read
     app.post("/chats/:id/read", createHandler(async (auth, { params }) => {
         const chatGuid = toChatGuid(params.id)
         await withSdk(auth, sdk => sdk.chats.markChatRead(chatGuid))
         return { ok: true }
-    }))
+    }), { detail: { tags: ["Chats"], summary: "Mark as read" } })
 
     // POST /chats/:id/unread - Mark as unread
     app.post("/chats/:id/unread", createHandler(async (auth, { params }) => {
         const chatGuid = toChatGuid(params.id)
         await withSdk(auth, sdk => sdk.chats.markChatUnread(chatGuid))
         return { ok: true }
-    }))
+    }), { detail: { tags: ["Chats"], summary: "Mark as unread" } })
 
     // POST /chats/:id/typing - Start typing
     app.post("/chats/:id/typing", createHandler(async (auth, { params }) => {
         const chatGuid = toChatGuid(params.id)
         await withSdk(auth, sdk => sdk.chats.startTyping(chatGuid))
         return { ok: true }
-    }))
+    }), { detail: { tags: ["Chats"], summary: "Start typing" } })
 
     // DELETE /chats/:id/typing - Stop typing
     app.delete("/chats/:id/typing", createHandler(async (auth, { params }) => {
         const chatGuid = toChatGuid(params.id)
         await withSdk(auth, sdk => sdk.chats.stopTyping(chatGuid))
         return { ok: true }
-    }))
+    }), { detail: { tags: ["Chats"], summary: "Stop typing" } })
 
     // POST /chats/:id/contact/share - Share contact card
     app.post("/chats/:id/contact/share", createHandler(async (auth, { params }) => {
         const chatGuid = toChatGuid(params.id)
         await withSdk(auth, sdk => sdk.contacts.shareContactCard(chatGuid))
         return { ok: true }
-    }))
+    }), { detail: { tags: ["Chats"], summary: "Share contact card" } })
 
     // GET /chats/:id/contact/status - Check if contact sharing is recommended
     app.get("/chats/:id/contact/status", createHandler(async (auth, { params }) => {
@@ -109,5 +120,5 @@ export function setupChatRoutes(app: any): void {
             }
             throw error
         }
-    }))
+    }), { detail: { tags: ["Chats"], summary: "Check contact sharing status" } })
 }

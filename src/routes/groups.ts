@@ -36,7 +36,8 @@ export function setupGroupRoutes(app: any): void {
             members: t.Array(t.String({ minLength: 1, maxLength: 256 }), { minItems: 2, maxItems: 32 }),
             name: t.Optional(t.String({ maxLength: 128 })),
             message: t.Optional(t.String({ maxLength: 1000 })),
-        })
+        }),
+        detail: { tags: ["Groups"], summary: "Create group chat" },
     })
 
     // PATCH /groups/:id - Update group
@@ -44,21 +45,21 @@ export function setupGroupRoutes(app: any): void {
         const chatGuid = toGroupChatGuid(params.id)
         await withSdk(auth, sdk => sdk.chats.updateChat(chatGuid, { displayName: body.name }))
         return { ok: true }
-    }), { body: t.Object({ name: t.String({ minLength: 1, maxLength: 128 }) }) })
+    }), { body: t.Object({ name: t.String({ minLength: 1, maxLength: 128 }) }), detail: { tags: ["Groups"], summary: "Update group name" } })
 
     // POST /groups/:id/icon - Set group icon
     app.post("/groups/:id/icon", createHandler(async (auth, { params, body }) => {
         const chatGuid = toGroupChatGuid(params.id)
         await withSdk(auth, sdk => withTempFile(body.file, path => sdk.chats.setGroupIcon(chatGuid, path)))
         return { ok: true }
-    }), { body: t.Object({ file: t.File({ maxSize: 10 * 1024 * 1024 }) }) }) // 10MB icon limit
+    }), { body: t.Object({ file: t.File({ maxSize: 10 * 1024 * 1024 }) }), detail: { tags: ["Groups"], summary: "Set group icon" } })
 
     // DELETE /groups/:id/icon - Remove group icon
     app.delete("/groups/:id/icon", createHandler(async (auth, { params }) => {
         const chatGuid = toGroupChatGuid(params.id)
         await withSdk(auth, sdk => sdk.chats.removeGroupIcon(chatGuid))
         return { ok: true }
-    }))
+    }), { detail: { tags: ["Groups"], summary: "Remove group icon" } })
 
     // POST /groups/:id/participants - Add participant
     // Note: May timeout on some systems due to upstream limitations
@@ -72,7 +73,8 @@ export function setupGroupRoutes(app: any): void {
     }), {
         body: t.Object({
             address: t.String({ minLength: 1, maxLength: 256 }),
-        })
+        }),
+        detail: { tags: ["Groups"], summary: "Add participant" },
     })
 
     // DELETE /groups/:id/participants/:address - Remove participant
@@ -84,5 +86,5 @@ export function setupGroupRoutes(app: any): void {
             address: params.address,
         }))
         return { ok: true, data: { address: params.address } }
-    }))
+    }), { detail: { tags: ["Groups"], summary: "Remove participant" } })
 }

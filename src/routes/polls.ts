@@ -33,7 +33,8 @@ export function setupPollRoutes(app: any): void {
             to: t.String({ minLength: 1, maxLength: 256 }),
             question: t.Optional(t.String({ maxLength: 256 })),
             options: t.Array(t.String({ minLength: 1, maxLength: 128 }), { minItems: 2, maxItems: 10 }),
-        })
+        }),
+        detail: { tags: ["Polls"], summary: "Create poll" },
     })
 
     // POST /polls/:id/vote - Vote
@@ -44,7 +45,8 @@ export function setupPollRoutes(app: any): void {
         }))
         return { ok: true }
     }), {
-        body: t.Object({ chat: t.String({ minLength: 1, maxLength: 256 }), optionId: t.String({ maxLength: 128 }) })
+        body: t.Object({ chat: t.String({ minLength: 1, maxLength: 256 }), optionId: t.String({ maxLength: 128 }) }),
+        detail: { tags: ["Polls"], summary: "Vote on poll" },
     })
 
     // POST /polls/:id/unvote - Unvote
@@ -55,7 +57,8 @@ export function setupPollRoutes(app: any): void {
         }))
         return { ok: true }
     }), {
-        body: t.Object({ chat: t.String({ minLength: 1, maxLength: 256 }), optionId: t.String({ maxLength: 128 }) })
+        body: t.Object({ chat: t.String({ minLength: 1, maxLength: 256 }), optionId: t.String({ maxLength: 128 }) }),
+        detail: { tags: ["Polls"], summary: "Unvote on poll" },
     })
 
     // GET /polls/:id - Get poll details
@@ -84,7 +87,7 @@ export function setupPollRoutes(app: any): void {
         }
         
         return { ok: false, error: { code: "POLL_NOT_FOUND", message: "Poll not found or unable to parse. Try using the poll ID returned from POST /polls instead." } }
-    }))
+    }), { detail: { tags: ["Polls"], summary: "Get poll details" } })
 
     // POST /polls/:id/options - Add option to poll
     app.post("/polls/:id/options", createHandler(async (auth, { params, body }) => {
@@ -99,6 +102,7 @@ export function setupPollRoutes(app: any): void {
         body: t.Object({ 
             chat: t.String({ minLength: 1, maxLength: 256 }), 
             text: t.String({ minLength: 1, maxLength: 128 }) 
-        })
+        }),
+        detail: { tags: ["Polls"], summary: "Add poll option" },
     })
 }
