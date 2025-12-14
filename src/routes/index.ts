@@ -1,6 +1,7 @@
 /**
  * Routes Entry
  */
+import { t } from "elysia"
 import { setupMessageRoutes } from "./messages"
 import { setupChatRoutes } from "./chats"
 import { setupGroupRoutes } from "./groups"
@@ -18,6 +19,10 @@ export function setupRoutes(app: any): void {
 
     // Health check
     app.get("/health", () => ({ ok: true, data: { status: "healthy" } }), {
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Object({ status: t.Literal("healthy") }),
+        }),
         detail: { tags: ["Server"], summary: "Health check" },
         security: [],
     })

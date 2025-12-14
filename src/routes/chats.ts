@@ -22,9 +22,23 @@ export function setupChatRoutes(app: any): void {
         }
     }), {
         query: t.Object({
-            limit: t.Optional(t.Numeric({ description: "Max number of chats to return", default: 50 })),
+            limit: t.Optional(t.Numeric({ description: "How many conversations to fetch", default: 50 })),
         }),
-        detail: { tags: ["Chats"], summary: "List chats" },
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Array(t.Object({
+                id: t.String(),
+                name: t.Nullable(t.String()),
+                isGroup: t.Boolean(),
+                lastMessage: t.MaybeEmpty(t.String()),
+                lastMessageAt: t.Optional(t.Number()),
+            })),
+        }),
+        detail: {
+            tags: ["Chats"],
+            summary: "List all conversations",
+            description: "Get your recent conversations (both 1-on-1 and groups), sorted by most recent activity.",
+        },
     })
 
     // GET /chats/:id - Get chat
@@ -41,7 +55,21 @@ export function setupChatRoutes(app: any): void {
                 participants: chat.participants?.map((p: any) => p.address) || [],
             }
         }
-    }), { detail: { tags: ["Chats"], summary: "Get chat details" } })
+    }), {
+        params: t.Object({
+            id: t.String({ description: "Phone, email, or group ID (group:xxx)" }),
+        }),
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Object({
+                id: t.String(),
+                name: t.Nullable(t.String()),
+                isGroup: t.Boolean(),
+                participants: t.Array(t.String()),
+            }),
+        }),
+        detail: { tags: ["Chats"], summary: "Get chat details" },
+    })
 
     // GET /chats/:id/messages - Get chat messages
     app.get("/chats/:id/messages", createHandler(async (auth, { params, query }) => {
@@ -59,8 +87,20 @@ export function setupChatRoutes(app: any): void {
             }))
         }
     }), {
+        params: t.Object({
+            id: t.String({ description: "Conversation ID" }),
+        }),
         query: t.Object({
-            limit: t.Optional(t.Numeric({ description: "Max number of messages to return", default: 50 })),
+            limit: t.Optional(t.Numeric({ description: "How many messages to fetch", default: 50 })),
+        }),
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Array(t.Object({
+                id: t.String(),
+                text: t.Nullable(t.String()),
+                from: t.MaybeEmpty(t.String()),
+                sentAt: t.Number(),
+            })),
         }),
         detail: { tags: ["Chats"], summary: "Get chat messages" },
     })
@@ -70,35 +110,63 @@ export function setupChatRoutes(app: any): void {
         const chatGuid = toChatGuid(params.id)
         await withSdk(auth, sdk => sdk.chats.markChatRead(chatGuid))
         return { ok: true }
-    }), { detail: { tags: ["Chats"], summary: "Mark as read" } })
+    }), {
+        params: t.Object({ id: t.String({ description: "Chat identifier" }) }),
+        response: t.Object({ ok: t.Literal(true) }),
+        detail: { tags: ["Chats"], summary: "Mark as read" },
+    })
 
     // POST /chats/:id/unread - Mark as unread
     app.post("/chats/:id/unread", createHandler(async (auth, { params }) => {
         const chatGuid = toChatGuid(params.id)
         await withSdk(auth, sdk => sdk.chats.markChatUnread(chatGuid))
         return { ok: true }
-    }), { detail: { tags: ["Chats"], summary: "Mark as unread" } })
+    }), {
+        params: t.Object({ id: t.String({ description: "Chat identifier" }) }),
+        response: t.Object({ ok: t.Literal(true) }),
+        detail: { tags: ["Chats"], summary: "Mark as unread" },
+    })
 
     // POST /chats/:id/typing - Start typing
     app.post("/chats/:id/typing", createHandler(async (auth, { params }) => {
         const chatGuid = toChatGuid(params.id)
         await withSdk(auth, sdk => sdk.chats.startTyping(chatGuid))
         return { ok: true }
-    }), { detail: { tags: ["Chats"], summary: "Start typing" } })
+    }), {
+        params: t.Object({ id: t.String({ description: "Chat identifier" }) }),
+        response: t.Object({ ok: t.Literal(true) }),
+        detail: {
+            tags: ["Chats"],
+            summary: "Show typing indicator",
+            description: "Start the typing indicator for this chat. Call the stop-typing endpoint when done.",
+        },
+    })
 
     // DELETE /chats/:id/typing - Stop typing
     app.delete("/chats/:id/typing", createHandler(async (auth, { params }) => {
         const chatGuid = toChatGuid(params.id)
         await withSdk(auth, sdk => sdk.chats.stopTyping(chatGuid))
         return { ok: true }
-    }), { detail: { tags: ["Chats"], summary: "Stop typing" } })
+    }), {
+        params: t.Object({ id: t.String({ description: "Chat identifier" }) }),
+        response: t.Object({ ok: t.Literal(true) }),
+        detail: {
+            tags: ["Chats"],
+            summary: "Hide typing indicator",
+            description: "Stop the typing indicator for this chat.",
+        },
+    })
 
     // POST /chats/:id/contact/share - Share contact card
     app.post("/chats/:id/contact/share", createHandler(async (auth, { params }) => {
         const chatGuid = toChatGuid(params.id)
         await withSdk(auth, sdk => sdk.contacts.shareContactCard(chatGuid))
         return { ok: true }
-    }), { detail: { tags: ["Chats"], summary: "Share contact card" } })
+    }), {
+        params: t.Object({ id: t.String({ description: "Chat identifier" }) }),
+        response: t.Object({ ok: t.Literal(true) }),
+        detail: { tags: ["Chats"], summary: "Share contact card" },
+    })
 
     // GET /chats/:id/contact/status - Check if contact sharing is recommended
     app.get("/chats/:id/contact/status", createHandler(async (auth, { params }) => {
@@ -120,5 +188,16 @@ export function setupChatRoutes(app: any): void {
             }
             throw error
         }
-    }), { detail: { tags: ["Chats"], summary: "Check contact sharing status" } })
+    }), {
+        params: t.Object({ id: t.String({ description: "Chat identifier" }) }),
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Object({
+                shouldShare: t.Boolean(),
+                recommended: t.Boolean(),
+                note: t.Optional(t.String()),
+            }),
+        }),
+        detail: { tags: ["Chats"], summary: "Check contact sharing status" },
+    })
 }

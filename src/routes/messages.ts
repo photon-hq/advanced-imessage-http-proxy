@@ -19,20 +19,34 @@ export function setupMessageRoutes(app: any): void {
         return { ok: true, data: { id: result.guid, to: fromChatGuid(chatGuid), text: result.text, sentAt: result.dateCreated } }
     }), {
         body: t.Object({
-            to: t.String({ minLength: 1, maxLength: 256 }),
-            text: t.String({ minLength: 1, maxLength: 10000 }),
-            subject: t.Optional(t.String({ maxLength: 256 })),
+            to: t.String({ minLength: 1, maxLength: 256, description: "Who to send to: phone (+1234567890), email, or group ID (group:chat123456)" }),
+            text: t.String({ minLength: 1, maxLength: 10000, description: "Your message" }),
+            subject: t.Optional(t.String({ maxLength: 256, description: "Subject line (shown in bold above the message)" })),
             effect: t.Optional(t.Union([
                 t.Literal("confetti"),
                 t.Literal("fireworks"),
-                t.Literal("balloons"),
+                t.Literal("balloon"),
                 t.Literal("heart"),
-                t.Literal("lasers"),
                 t.Literal("sparkles"),
-            ])),
-            replyTo: t.Optional(t.String({ maxLength: 128 })),
+                t.Literal("echo"),
+                t.Literal("spotlight"),
+            ], { description: "Full-screen animation when recipient opens the message" })),
+            replyTo: t.Optional(t.String({ maxLength: 128, description: "Reply to a specific message (paste its ID here)" })),
         }),
-        detail: { tags: ["Messages"], summary: "Send a message" },
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Object({
+                id: t.String(),
+                to: t.String(),
+                text: t.String(),
+                sentAt: t.Number(),
+            }),
+        }),
+        detail: {
+            tags: ["Messages"],
+            summary: "Send a text message",
+            description: "Send a text message through the configured iMessage server. Supports screen effects, replies, and subject lines.",
+        },
     })
 
     // POST /send/file - Send file
@@ -56,11 +70,28 @@ export function setupMessageRoutes(app: any): void {
         }
     }), {
         body: t.Object({
-            to: t.String({ minLength: 1, maxLength: 256 }),
-            file: t.File({ maxSize: 100 * 1024 * 1024 }), // 100MB limit
-            audio: t.Optional(t.Union([t.Boolean(), t.String()])),
+            to: t.String({ minLength: 1, maxLength: 256, description: "Who to send to: phone, email, or group ID" }),
+            file: t.File({ maxSize: 100 * 1024 * 1024, description: "The file to send (photos, videos, documents, etc.)" }),
+            audio: t.Optional(t.Union([t.Boolean(), t.String()], { description: "Set to true to send as an audio message (audio files only)" })),
         }),
-        detail: { tags: ["Attachments"], summary: "Send a file" },
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Object({
+                id: t.String(),
+                to: t.String(),
+                attachments: t.Optional(t.Array(t.Object({
+                    id: t.String(),
+                    name: t.Nullable(t.String()),
+                    size: t.Number(),
+                    type: t.Nullable(t.String()),
+                }))),
+            }),
+        }),
+        detail: {
+            tags: ["Attachments"],
+            summary: "Send a file",
+            description: "Send photos, videos, documents, or any file. Set audio=true to send audio files as audio messages.",
+        },
     })
 
     // POST /send/sticker - Send sticker
@@ -101,16 +132,36 @@ export function setupMessageRoutes(app: any): void {
         }
     }), {
         body: t.Object({
-            to: t.String({ minLength: 1, maxLength: 256 }),
-            file: t.File({ maxSize: 10 * 1024 * 1024 }), // 10MB limit for stickers
-            replyTo: t.Optional(t.String({ maxLength: 128 })), // Optional: attach sticker to message
-            stickerX: t.Optional(t.Union([t.Number(), t.String()])), // Position X (0-1), default: 0.5
-            stickerY: t.Optional(t.Union([t.Number(), t.String()])), // Position Y (0-1), default: 0.5
-            stickerScale: t.Optional(t.Union([t.Number(), t.String()])), // Scale (0-1), default: 0.75
-            stickerRotation: t.Optional(t.Union([t.Number(), t.String()])), // Rotation in radians, default: 0
-            stickerWidth: t.Optional(t.Union([t.Number(), t.String()])),
+            to: t.String({ minLength: 1, maxLength: 256, description: "Who to send to: phone, email, or group ID" }),
+            file: t.File({ maxSize: 10 * 1024 * 1024, description: "Sticker image (PNG recommended)" }),
+            replyTo: t.Optional(t.String({ maxLength: 128, description: "Attach sticker to this message (paste message ID)" })),
+            stickerX: t.Optional(t.Union([t.Number(), t.String()], { description: "X position (0-1), default 0.5 = center" })),
+            stickerY: t.Optional(t.Union([t.Number(), t.String()], { description: "Y position (0-1), default 0.5 = center" })),
+            stickerScale: t.Optional(t.Union([t.Number(), t.String()], { description: "Scale (0-1), default 0.75" })),
+            stickerRotation: t.Optional(t.Union([t.Number(), t.String()], { description: "Rotation in radians, default 0" })),
+            stickerWidth: t.Optional(t.Union([t.Number(), t.String()], { description: "Width in pixels, default 300" })),
         }),
-        detail: { tags: ["Attachments"], summary: "Send a sticker" },
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Object({
+                id: t.String(),
+                to: t.String(),
+                isSticker: t.Literal(true),
+                replyTo: t.Nullable(t.String()),
+                attachments: t.Optional(t.Array(t.Object({
+                    id: t.String(),
+                    name: t.Nullable(t.String()),
+                    size: t.Number(),
+                    type: t.Nullable(t.String()),
+                    isSticker: t.Optional(t.Boolean()),
+                }))),
+            }),
+        }),
+        detail: {
+            tags: ["Attachments"],
+            summary: "Send a sticker",
+            description: "Send a sticker image. If replyTo is set, the sticker is associated with the target message.",
+        },
     })
 
     // GET /messages - List messages
@@ -133,11 +184,25 @@ export function setupMessageRoutes(app: any): void {
         }
     }), {
         query: t.Object({
-            limit: t.Optional(t.Numeric({ description: "Max number of messages to return", default: 50 })),
-            offset: t.Optional(t.Numeric({ description: "Offset for pagination", default: 0 })),
-            chat: t.Optional(t.String({ description: "Chat identifier to filter messages" })),
+            limit: t.Optional(t.Numeric({ description: "How many messages to fetch", default: 50 })),
+            offset: t.Optional(t.Numeric({ description: "Skip this many messages (for loading older ones)", default: 0 })),
+            chat: t.Optional(t.String({ description: "Only show messages from this conversation" })),
         }),
-        detail: { tags: ["Messages"], summary: "List messages" },
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Array(t.Object({
+                id: t.String(),
+                text: t.Nullable(t.String()),
+                from: t.MaybeEmpty(t.String()),
+                chat: t.Nullable(t.String()),
+                sentAt: t.Number(),
+            })),
+        }),
+        detail: {
+            tags: ["Messages"],
+            summary: "List recent messages",
+            description: "Get messages from all chats or a specific chat. Results are sorted newest first.",
+        },
     })
 
     // GET /messages/search - Search messages
@@ -154,8 +219,17 @@ export function setupMessageRoutes(app: any): void {
         }
     }), {
         query: t.Object({
-            q: t.String({ minLength: 1, description: "Search text" }),
-            limit: t.Optional(t.Numeric({ description: "Max number of results to return", default: 20 })),
+            q: t.String({ minLength: 1, description: "What to search for" }),
+            limit: t.Optional(t.Numeric({ description: "Max results", default: 20 })),
+        }),
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Array(t.Object({
+                id: t.String(),
+                text: t.Nullable(t.String()),
+                from: t.MaybeEmpty(t.String()),
+                sentAt: t.Number(),
+            })),
         }),
         detail: {
             tags: ["Messages"],
@@ -175,19 +249,51 @@ export function setupMessageRoutes(app: any): void {
                 sentAt: msg.dateCreated, read: !!msg.dateRead, delivered: !!msg.dateDelivered,
             }
         }
-    }), { detail: { tags: ["Messages"], summary: "Get message by ID" } })
+    }), {
+        params: t.Object({ id: t.String({ description: "Message GUID" }) }),
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Object({
+                id: t.String(),
+                text: t.Nullable(t.String()),
+                from: t.MaybeEmpty(t.String()),
+                chat: t.Nullable(t.String()),
+                sentAt: t.Number(),
+                read: t.Boolean(),
+                delivered: t.Boolean(),
+            }),
+        }),
+        detail: { tags: ["Messages"], summary: "Get message by ID" },
+    })
 
     // PATCH /messages/:id - Edit message
     app.patch("/messages/:id", createHandler(async (auth, { params, body }) => {
         await withSdk(auth, sdk => sdk.messages.editMessage({ messageGuid: params.id, editedMessage: body.text, partIndex: 0 }))
         return { ok: true }
-    }), { body: t.Object({ text: t.String() }), detail: { tags: ["Messages"], summary: "Edit message" } })
+    }), {
+        params: t.Object({ id: t.String({ description: "Message GUID" }) }),
+        body: t.Object({ text: t.String({ minLength: 1, description: "The new text to replace the original message" }) }),
+        response: t.Object({ ok: t.Literal(true) }),
+        detail: {
+            tags: ["Messages"],
+            summary: "Edit a sent message",
+            description: "Replace the text of a message you sent. Only works on messages you sent.",
+        },
+    })
 
     // DELETE /messages/:id - Unsend message
     app.delete("/messages/:id", createHandler(async (auth, { params }) => {
         await withSdk(auth, sdk => sdk.messages.unsendMessage({ messageGuid: params.id }))
         return { ok: true }
-    }), { detail: { tags: ["Messages"], summary: "Unsend message" } })
+    }), {
+        params: t.Object({ id: t.String({ description: "Message GUID" }) }),
+        response: t.Object({ ok: t.Literal(true) }),
+        detail: {
+            tags: ["Messages"],
+            summary: "Unsend a message",
+            description: "Remove a message you sent from the conversation.",
+        },
+    })
 
     // POST /messages/:id/react - Send reaction
     app.post("/messages/:id/react", createHandler(async (auth, { params, body }) => {
@@ -199,8 +305,17 @@ export function setupMessageRoutes(app: any): void {
         }))
         return { ok: true }
     }), {
-        body: t.Object({ chat: t.String({ minLength: 1, maxLength: 256 }), type: t.String() }),
-        detail: { tags: ["Messages"], summary: "React to message" },
+        params: t.Object({ id: t.String({ description: "Message GUID" }) }),
+        body: t.Object({
+            chat: t.String({ minLength: 1, maxLength: 256, description: "Which conversation this message is in" }),
+            type: t.String({ minLength: 1, description: "Tapback: love ❤️, like 👍, dislike 👎, laugh 😂, emphasize ‼️, question ❓" }),
+        }),
+        response: t.Object({ ok: t.Literal(true) }),
+        detail: {
+            tags: ["Messages"],
+            summary: "Add a tapback reaction",
+            description: "Add a reaction (heart, thumbs up, etc.) to any message in a conversation.",
+        },
     })
 
     // DELETE /messages/:id/react - Remove reaction
@@ -213,7 +328,16 @@ export function setupMessageRoutes(app: any): void {
         }))
         return { ok: true }
     }), {
-        body: t.Object({ chat: t.String({ minLength: 1, maxLength: 256 }), type: t.String() }),
-        detail: { tags: ["Messages"], summary: "Remove reaction" },
+        params: t.Object({ id: t.String({ description: "Message GUID" }) }),
+        body: t.Object({
+            chat: t.String({ minLength: 1, maxLength: 256, description: "Chat identifier where the message exists" }),
+            type: t.String({ minLength: 1, description: "Reaction type to remove: love, like, dislike, laugh, emphasize, question" }),
+        }),
+        response: t.Object({ ok: t.Literal(true) }),
+        detail: {
+            tags: ["Messages"],
+            summary: "Remove a tapback reaction",
+            description: "Remove a reaction you previously added to a message.",
+        },
     })
 }
