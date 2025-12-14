@@ -45,7 +45,7 @@ export function setupMessageRoutes(app: any): void {
         detail: {
             tags: ["Messages"],
             summary: "Send a text message",
-            description: "Sends an iMessage (or SMS if iMessage unavailable). Supports screen effects like confetti, replies, and subject lines.",
+            description: "Send a text message through the configured iMessage server. Supports screen effects, replies, and subject lines.",
         },
     })
 
@@ -72,7 +72,7 @@ export function setupMessageRoutes(app: any): void {
         body: t.Object({
             to: t.String({ minLength: 1, maxLength: 256, description: "Who to send to: phone, email, or group ID" }),
             file: t.File({ maxSize: 100 * 1024 * 1024, description: "The file to send (photos, videos, documents, etc.)" }),
-            audio: t.Optional(t.Union([t.Boolean(), t.String()], { description: "Set to true to send as a voice memo (audio files only)" })),
+            audio: t.Optional(t.Union([t.Boolean(), t.String()], { description: "Set to true to send as an audio message (audio files only)" })),
         }),
         response: t.Object({
             ok: t.Literal(true),
@@ -90,7 +90,7 @@ export function setupMessageRoutes(app: any): void {
         detail: {
             tags: ["Attachments"],
             summary: "Send a file",
-            description: "Send photos, videos, documents, or any file. Set audio=true to send audio files as voice memos.",
+            description: "Send photos, videos, documents, or any file. Set audio=true to send audio files as audio messages.",
         },
     })
 
@@ -160,7 +160,7 @@ export function setupMessageRoutes(app: any): void {
         detail: {
             tags: ["Attachments"],
             summary: "Send a sticker",
-            description: "Send a sticker image. If replyTo is set, the sticker is placed on top of that message bubble (like the iOS sticker feature).",
+            description: "Send a sticker image. If replyTo is set, the sticker is associated with the target message.",
         },
     })
 

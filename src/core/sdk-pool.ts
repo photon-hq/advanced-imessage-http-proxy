@@ -1,4 +1,4 @@
-import { SDK, type AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit"
+import { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit"
 
 // ------------------------------------------------------------------------------
 // Types
@@ -126,7 +126,7 @@ class SDKPool {
     // ------------------------------------------------------------------------
 
     private async createSDK(serverUrl: string, apiKey: string): Promise<AdvancedIMessageKit> {
-        return SDK({ serverUrl, apiKey })
+        return new AdvancedIMessageKit({ serverUrl, apiKey })
     }
 
     private incrementRef(key: string): void {

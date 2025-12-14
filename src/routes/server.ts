@@ -51,7 +51,7 @@ export function setupServerRoutes(app: any): void {
         detail: {
             tags: ["Server"],
             summary: "Check if a contact uses iMessage",
-            description: "Returns true if the phone/email is registered with iMessage, false if SMS-only.",
+            description: "Returns true if the phone/email is available for iMessage, false if iMessage is not available.",
         },
     })
 

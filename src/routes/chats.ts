@@ -138,7 +138,7 @@ export function setupChatRoutes(app: any): void {
         detail: {
             tags: ["Chats"],
             summary: "Show typing indicator",
-            description: "Make the '...' typing bubble appear for the other person. Call stop typing when done.",
+            description: "Start the typing indicator for this chat. Call the stop-typing endpoint when done.",
         },
     })
 
@@ -153,7 +153,7 @@ export function setupChatRoutes(app: any): void {
         detail: {
             tags: ["Chats"],
             summary: "Hide typing indicator",
-            description: "Remove the typing bubble. Called automatically if you send a message.",
+            description: "Stop the typing indicator for this chat.",
         },
     })
 

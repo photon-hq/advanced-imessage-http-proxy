@@ -91,10 +91,7 @@ export function setupGroupRoutes(app: any): void {
     // Note: May timeout on some systems due to upstream limitations
     app.post("/groups/:id/participants", createHandler(async (auth, { params, body }) => {
         const chatGuid = toGroupChatGuid(params.id)
-        await withSdk(auth, sdk => sdk.chats.addParticipant({
-            chatGuid,
-            address: body.address,
-        }))
+        await withSdk(auth, sdk => sdk.chats.addParticipant(chatGuid, body.address))
         return { ok: true, data: { address: body.address } }
     }), {
         params: t.Object({ id: t.String({ description: "Group ID" }) }),
@@ -116,10 +113,7 @@ export function setupGroupRoutes(app: any): void {
     // Note: May timeout on some systems due to upstream limitations
     app.delete("/groups/:id/participants/:address", createHandler(async (auth, { params }) => {
         const chatGuid = toGroupChatGuid(params.id)
-        await withSdk(auth, sdk => sdk.chats.removeParticipant({
-            chatGuid,
-            address: params.address,
-        }))
+        await withSdk(auth, sdk => sdk.chats.removeParticipant(chatGuid, params.address))
         return { ok: true, data: { address: params.address } }
     }), {
         params: t.Object({
@@ -133,7 +127,7 @@ export function setupGroupRoutes(app: any): void {
         detail: {
             tags: ["Groups"],
             summary: "Remove someone from the group",
-            description: "Remove a person from the group chat. They won't receive future messages.",
+            description: "Remove a person from the group chat.",
         },
     })
 }
