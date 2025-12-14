@@ -30,11 +30,23 @@ export function setupPollRoutes(app: any): void {
         return { ok: true, data: { id: created.guid, question, options } }
     }), {
         body: t.Object({
-            to: t.String({ minLength: 1, maxLength: 256 }),
-            question: t.Optional(t.String({ maxLength: 256 })),
-            options: t.Array(t.String({ minLength: 1, maxLength: 128 }), { minItems: 2, maxItems: 10 }),
+            to: t.String({ minLength: 1, maxLength: 256, description: "Who to send the poll to: phone, email, or group ID" }),
+            question: t.Optional(t.String({ maxLength: 256, description: "The question you're asking" })),
+            options: t.Array(t.String({ minLength: 1, maxLength: 128, description: "One answer option" }), { minItems: 2, maxItems: 10, description: "Possible answers (need at least 2)" }),
         }),
-        detail: { tags: ["Polls"], summary: "Create poll" },
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Object({
+                id: t.String(),
+                question: t.Optional(t.String()),
+                options: t.Any(),
+            }),
+        }),
+        detail: {
+            tags: ["Polls"],
+            summary: "Create a poll",
+            description: "Send an iMessage poll. Recipients can vote directly in their Messages app.",
+        },
     })
 
     // POST /polls/:id/vote - Vote
@@ -45,7 +57,12 @@ export function setupPollRoutes(app: any): void {
         }))
         return { ok: true }
     }), {
-        body: t.Object({ chat: t.String({ minLength: 1, maxLength: 256 }), optionId: t.String({ maxLength: 128 }) }),
+        params: t.Object({ id: t.String({ description: "Poll message GUID" }) }),
+        body: t.Object({
+            chat: t.String({ minLength: 1, maxLength: 256, description: "The conversation where the poll was sent" }),
+            optionId: t.String({ minLength: 1, maxLength: 128, description: "Which option to vote for (from poll options)" }),
+        }),
+        response: t.Object({ ok: t.Literal(true) }),
         detail: { tags: ["Polls"], summary: "Vote on poll" },
     })
 
@@ -57,7 +74,12 @@ export function setupPollRoutes(app: any): void {
         }))
         return { ok: true }
     }), {
-        body: t.Object({ chat: t.String({ minLength: 1, maxLength: 256 }), optionId: t.String({ maxLength: 128 }) }),
+        params: t.Object({ id: t.String({ description: "Poll message GUID" }) }),
+        body: t.Object({
+            chat: t.String({ minLength: 1, maxLength: 256, description: "The conversation where the poll was sent" }),
+            optionId: t.String({ minLength: 1, maxLength: 128, description: "Which option to remove your vote from" }),
+        }),
+        response: t.Object({ ok: t.Literal(true) }),
         detail: { tags: ["Polls"], summary: "Unvote on poll" },
     })
 
@@ -87,7 +109,27 @@ export function setupPollRoutes(app: any): void {
         }
         
         return { ok: false, error: { code: "POLL_NOT_FOUND", message: "Poll not found or unable to parse. Try using the poll ID returned from POST /polls instead." } }
-    }), { detail: { tags: ["Polls"], summary: "Get poll details" } })
+    }), {
+        params: t.Object({ id: t.String({ description: "Poll message GUID" }) }),
+        response: t.Object({
+            ok: t.Boolean(),
+            data: t.Optional(t.Object({
+                id: t.String(),
+                question: t.Optional(t.String()),
+                options: t.Any(),
+                creatorHandle: t.Optional(t.String()),
+            })),
+            error: t.Optional(t.Object({
+                code: t.String(),
+                message: t.String(),
+            })),
+        }),
+        detail: {
+            tags: ["Polls"],
+            summary: "Get poll results",
+            description: "See the current votes and options for a poll. Use the poll ID from the create response.",
+        },
+    })
 
     // POST /polls/:id/options - Add option to poll
     app.post("/polls/:id/options", createHandler(async (auth, { params, body }) => {
@@ -99,10 +141,12 @@ export function setupPollRoutes(app: any): void {
         }))
         return { ok: true }
     }), {
+        params: t.Object({ id: t.String({ description: "Poll message GUID" }) }),
         body: t.Object({ 
-            chat: t.String({ minLength: 1, maxLength: 256 }), 
-            text: t.String({ minLength: 1, maxLength: 128 }) 
+            chat: t.String({ minLength: 1, maxLength: 256, description: "The conversation where the poll was sent" }), 
+            text: t.String({ minLength: 1, maxLength: 128, description: "The new answer option to add" }) 
         }),
+        response: t.Object({ ok: t.Literal(true) }),
         detail: { tags: ["Polls"], summary: "Add poll option" },
     })
 }

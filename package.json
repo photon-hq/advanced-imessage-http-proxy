@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@elysiajs/swagger": "^1.3.1",
-    "@photon-ai/advanced-imessage-kit": "../advanced-imessage-kit",
+    "@photon-ai/advanced-imessage-kit": "^1.4.0",
     "elysia": "^1.4.18"
   }
 }
