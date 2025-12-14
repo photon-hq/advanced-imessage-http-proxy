@@ -31,7 +31,8 @@ export function setupMessageRoutes(app: any): void {
                 t.Literal("sparkles"),
             ])),
             replyTo: t.Optional(t.String({ maxLength: 128 })),
-        })
+        }),
+        detail: { tags: ["Messages"], summary: "Send a message" },
     })
 
     // POST /send/file - Send file
@@ -58,7 +59,8 @@ export function setupMessageRoutes(app: any): void {
             to: t.String({ minLength: 1, maxLength: 256 }),
             file: t.File({ maxSize: 100 * 1024 * 1024 }), // 100MB limit
             audio: t.Optional(t.Union([t.Boolean(), t.String()])),
-        })
+        }),
+        detail: { tags: ["Attachments"], summary: "Send a file" },
     })
 
     // POST /send/sticker - Send sticker
@@ -106,8 +108,9 @@ export function setupMessageRoutes(app: any): void {
             stickerY: t.Optional(t.Union([t.Number(), t.String()])), // Position Y (0-1), default: 0.5
             stickerScale: t.Optional(t.Union([t.Number(), t.String()])), // Scale (0-1), default: 0.75
             stickerRotation: t.Optional(t.Union([t.Number(), t.String()])), // Rotation in radians, default: 0
-            stickerWidth: t.Optional(t.Union([t.Number(), t.String()])), // Width in pixels, default: 300
-        })
+            stickerWidth: t.Optional(t.Union([t.Number(), t.String()])),
+        }),
+        detail: { tags: ["Attachments"], summary: "Send a sticker" },
     })
 
     // GET /messages - List messages
@@ -128,7 +131,14 @@ export function setupMessageRoutes(app: any): void {
                 sentAt: m.dateCreated,
             }))
         }
-    }))
+    }), {
+        query: t.Object({
+            limit: t.Optional(t.Numeric({ description: "Max number of messages to return", default: 50 })),
+            offset: t.Optional(t.Numeric({ description: "Offset for pagination", default: 0 })),
+            chat: t.Optional(t.String({ description: "Chat identifier to filter messages" })),
+        }),
+        detail: { tags: ["Messages"], summary: "List messages" },
+    })
 
     // GET /messages/search - Search messages
     app.get("/messages/search", createHandler(async (auth, { query, set }) => {
@@ -142,7 +152,17 @@ export function setupMessageRoutes(app: any): void {
             if (e?.response?.status === 404) return { ok: true, data: [] }
             throw e
         }
-    }))
+    }), {
+        query: t.Object({
+            q: t.String({ minLength: 1, description: "Search text" }),
+            limit: t.Optional(t.Numeric({ description: "Max number of results to return", default: 20 })),
+        }),
+        detail: {
+            tags: ["Messages"],
+            summary: "Search messages",
+            description: "Search messages by text. On macOS 13+ this uses Spotlight, which is token-based (word match) instead of simple substring LIKE.",
+        },
+    })
 
     // GET /messages/:id - Get single message
     app.get("/messages/:id", createHandler(async (auth, { params }) => {
@@ -155,19 +175,19 @@ export function setupMessageRoutes(app: any): void {
                 sentAt: msg.dateCreated, read: !!msg.dateRead, delivered: !!msg.dateDelivered,
             }
         }
-    }))
+    }), { detail: { tags: ["Messages"], summary: "Get message by ID" } })
 
-    // PATCH /messages/:id - Edit message (not supported on macOS 26.x due to upstream limitations)
+    // PATCH /messages/:id - Edit message
     app.patch("/messages/:id", createHandler(async (auth, { params, body }) => {
         await withSdk(auth, sdk => sdk.messages.editMessage({ messageGuid: params.id, editedMessage: body.text, partIndex: 0 }))
         return { ok: true }
-    }), { body: t.Object({ text: t.String() }) })
+    }), { body: t.Object({ text: t.String() }), detail: { tags: ["Messages"], summary: "Edit message" } })
 
     // DELETE /messages/:id - Unsend message
     app.delete("/messages/:id", createHandler(async (auth, { params }) => {
         await withSdk(auth, sdk => sdk.messages.unsendMessage({ messageGuid: params.id }))
         return { ok: true }
-    }))
+    }), { detail: { tags: ["Messages"], summary: "Unsend message" } })
 
     // POST /messages/:id/react - Send reaction
     app.post("/messages/:id/react", createHandler(async (auth, { params, body }) => {
@@ -179,10 +199,8 @@ export function setupMessageRoutes(app: any): void {
         }))
         return { ok: true }
     }), {
-        body: t.Object({
-            chat: t.String({ minLength: 1, maxLength: 256 }),
-            type: t.String(),
-        }),
+        body: t.Object({ chat: t.String({ minLength: 1, maxLength: 256 }), type: t.String() }),
+        detail: { tags: ["Messages"], summary: "React to message" },
     })
 
     // DELETE /messages/:id/react - Remove reaction
@@ -195,9 +213,7 @@ export function setupMessageRoutes(app: any): void {
         }))
         return { ok: true }
     }), {
-        body: t.Object({
-            chat: t.String({ minLength: 1, maxLength: 256 }),
-            type: t.String(),
-        }),
+        body: t.Object({ chat: t.String({ minLength: 1, maxLength: 256 }), type: t.String() }),
+        detail: { tags: ["Messages"], summary: "Remove reaction" },
     })
 }

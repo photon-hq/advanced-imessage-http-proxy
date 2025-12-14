@@ -32,7 +32,6 @@ const EVENTS = [
 
 class WebSocketHub {
     private subscriptions = new Map<string, Set<WS>>()
-    private sdkByKey = new Map<string, AdvancedIMessageKit>()
 
     // ------------------------------------------------------------------------
     // Public API
@@ -44,7 +43,6 @@ class WebSocketHub {
         if (!this.subscriptions.has(key)) {
             this.subscriptions.set(key, new Set())
             this.registerEvents(key, sdk)
-            this.sdkByKey.set(key, sdk)
         }
 
         this.subscriptions.get(key)!.add(ws)
@@ -60,7 +58,6 @@ class WebSocketHub {
 
         if (clients.size === 0) {
             this.subscriptions.delete(key)
-            this.sdkByKey.delete(key)
         }
     }
 

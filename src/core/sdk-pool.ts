@@ -126,7 +126,7 @@ class SDKPool {
     // ------------------------------------------------------------------------
 
     private async createSDK(serverUrl: string, apiKey: string): Promise<AdvancedIMessageKit> {
-        return AdvancedIMessageKit.createInstance({ serverUrl, apiKey })
+        return new AdvancedIMessageKit({ serverUrl, apiKey })
     }
 
     private incrementRef(key: string): void {

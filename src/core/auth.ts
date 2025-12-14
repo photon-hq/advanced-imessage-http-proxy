@@ -9,7 +9,11 @@ export interface Auth {
     apiKey: string
 }
 
-/** Parse Authorization Header */
+/**
+ * Parse Authorization header.
+ * The token packs `serverUrl` and `apiKey` as base64("url|key") so clients only need
+ * a single Bearer token and we avoid dealing with URL special characters in headers.
+ */
 export function parseAuth(authorization: string | undefined): Auth | null {
     if (!authorization?.startsWith("Bearer ")) return null
     try {
@@ -61,7 +65,7 @@ export function createHandler(handler: (auth: Auth, ctx: any) => Promise<any>) {
         } catch (error) {
             const mapped = mapError(error)
             ctx.set.status = mapped.status
-            return { ok: false, error: { code: mapped.error.code, message: mapped.error.message } }
+            return { ok: false, error: mapped.error }
         }
     }
 }
