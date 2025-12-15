@@ -177,7 +177,7 @@ export function setupMessageRoutes(app: any): void {
             data: messages.map((m: any) => ({
                 id: m.guid,
                 text: m.text,
-                from: m.isFromMe ? "me" : m.handle?.address,
+                from: m.isFromMe ? "me" : (m.handle?.address ?? ""),
                 chat: m.chats?.[0]?.guid ? fromChatGuid(m.chats[0].guid) : null,
                 sentAt: m.dateCreated,
             }))

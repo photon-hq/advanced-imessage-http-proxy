@@ -8,7 +8,7 @@ export function setupServerRoutes(app: any): void {
     // GET /server - Server info
     app.get("/server", createHandler(async (auth) => {
         const info: any = await withSdk(auth, sdk => sdk.server.getServerInfo())
-        return { ok: true, data: { os: info.os_version, server: info.server_version, mac: info.computer_name } }
+        return { ok: true, data: { os: info.os_version, server: info.server_version, mac: info.computer_name ?? "" } }
     }), {
         response: t.Object({
             ok: t.Literal(true),

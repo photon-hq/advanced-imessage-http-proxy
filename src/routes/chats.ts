@@ -16,7 +16,7 @@ export function setupChatRoutes(app: any): void {
                 id: fromChatGuid(c.guid),
                 name: c.displayName || null,
                 isGroup: c.guid.includes(";+;"),
-                lastMessage: c.lastMessage?.text,
+                lastMessage: c.lastMessage?.text ?? "",
                 lastMessageAt: c.lastMessage?.dateCreated,
             }))
         }
