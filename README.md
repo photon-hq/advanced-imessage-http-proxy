@@ -30,11 +30,7 @@ Advanced iMessage HTTP Proxy is a RESTful API that proxies requests to Advanced 
 | [Create Groups](#create-groups) | Start group chats | `POST /groups` | [group-create.sh](./examples/group-create.sh) |
 | [Update Groups](#update-groups) | Rename groups | `PATCH /groups/:id` | [group-create.sh](./examples/group-create.sh) |
 | [Group Icons](#group-icons) | Set/remove group icons | `POST /groups/:id/icon` | - |
-| [Manage Members](#manage-members) | Add/remove participants | `POST /groups/:id/participants` | - |
 | [Create Polls](#create-polls) | Create interactive polls | `POST /polls` | [poll-create.sh](./examples/poll-create.sh) |
-| [Get Poll Details](#get-poll-details) | Fetch poll information | `GET /polls/:id` | [poll-create.sh](./examples/poll-create.sh) |
-| [Vote on Polls](#vote-on-polls) | Vote or unvote | `POST /polls/:id/vote` | [poll-create.sh](./examples/poll-create.sh) |
-| [Add Poll Options](#add-poll-options) | Extend poll choices | `POST /polls/:id/options` | [poll-create.sh](./examples/poll-create.sh) |
 | [Download Attachments](#download-attachments) | Get received files | `GET /attachments/:id` | [attachment-download.sh](./examples/attachment-download.sh) |
 | [Attachment Info](#attachment-info) | Get file metadata | `GET /attachments/:id/info` | - |
 | [Check iMessage](#check-imessage) | Verify contact availability | `GET /check/:address` | [service-check.sh](./examples/service-check.sh) |
@@ -281,17 +277,9 @@ curl -X PATCH http://localhost:3000/groups/GROUP_ID \
 curl -X POST http://localhost:3000/groups/GROUP_ID/icon \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@icon.png"
-
-# Add participant
-curl -X POST http://localhost:3000/groups/GROUP_ID/participants \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"address": "new@example.com"}'
-
-# Remove participant
-curl -X DELETE http://localhost:3000/groups/GROUP_ID/participants/user@example.com \
-  -H "Authorization: Bearer $TOKEN"
 ```
+
+> ⚠️ **Note**: Adding/removing group members is currently limited. See [Known Limitations](#known-limitations).
 
 > Example: [group-create.sh](./examples/group-create.sh)
 
@@ -331,6 +319,8 @@ curl -X POST http://localhost:3000/polls/$POLL_ID/options \
   -H "Content-Type: application/json" \
   -d '{"chat": "group:abc", "text": "Sushi"}'
 ```
+
+> ⚠️ **Note**: Poll retrieval and voting operations have known limitations. See [Known Limitations](#known-limitations).
 
 > Example: [poll-create.sh](./examples/poll-create.sh)
 
@@ -476,8 +466,10 @@ Some endpoints may also return resource-specific error codes such as `POLL_NOT_F
 
 | Feature | Status | Reason |
 | ------- | ------ | ------ |
-| Group Rename/Icon | ⚠️ | May fail for some groups (permissions/state) |
-| Add/Remove Group Members | ⚠️ | May timeout on some systems (upstream limitation) |
+| Add Group Members | ⚠️ | May timeout on some systems (upstream limitation) |
+| Remove Group Members | ❌ | Upstream API compatibility issue - currently not functional |
+| Get Poll Details | ⚠️ | May return `POLL_NOT_FOUND` even when poll exists (upstream sync issue) |
+| Poll Vote/Unvote/Options | ⚠️ | Operations succeed but lack server-side validation |
 
 ---
 
