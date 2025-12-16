@@ -38,7 +38,7 @@ export function createApp() {
             documentation: {
                 info: {
                     title: "iMessage HTTP Proxy",
-                    version: "2.0.0",
+                    version: "1.0.0",
                     description: OPENAPI_DESCRIPTION,
                     contact: {
                         name: "API Support",
