@@ -17,6 +17,21 @@ export function setupRoutes(app: any): void {
     setupPollRoutes(app)
     setupServerRoutes(app)
 
+    // Root endpoint - API info
+    app.get("/", () => ({
+        name: "iMessage HTTP Proxy",
+        version: "1.0.0",
+        documentation: "/swagger",
+        health: "/health"
+    }), {
+        detail: { 
+            tags: ["Server"], 
+            summary: "API information",
+            description: "Returns basic information about the API"
+        },
+        security: [],
+    })
+
     // Health check
     app.get("/health", () => ({ ok: true, data: { status: "healthy" } }), {
         response: t.Object({
