@@ -17,18 +17,15 @@ export function setupRoutes(app: any): void {
     setupPollRoutes(app)
     setupServerRoutes(app)
 
-    // Root endpoint - API info
-    app.get("/", () => ({
-        name: "iMessage HTTP Proxy",
-        version: "1.0.0",
-        documentation: "/swagger",
-        health: "/health"
-    }), {
-        detail: { 
-            tags: ["Server"], 
-            summary: "API information",
-            description: "Returns basic information about the API"
-        },
+    // Root - Redirect to GitHub
+    app.get("/", ({ set }: { set: any }) => {
+        set.status = 302
+        set.headers = {
+            'Location': 'https://github.com/photon-hq/advanced-imessage-http-proxy'
+        }
+        return
+    }, {
+        detail: { tags: ["Server"], summary: "Redirect to GitHub repository" },
         security: [],
     })
 
