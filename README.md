@@ -21,25 +21,24 @@ Advanced iMessage HTTP Proxy is a RESTful API that proxies requests to Advanced 
 | [Remove Tapbacks](#remove-tapbacks) | Remove reactions | `DELETE /messages/:id/react` | [message-react.sh](./examples/message-react.sh) |
 | [Query Messages](#query-messages) | List and filter messages | `GET /messages` | [message-search.sh](./examples/message-search.sh) |
 | [Search Messages](#search-messages) | Search by text | `GET /messages/search` | [message-search.sh](./examples/message-search.sh) |
-| [Get Message](#get-message) | Get single message details | `GET /messages/:id` | - |
+| [Get Message](#get-message) | Get single message details | `GET /messages/:id` | [message-get.sh](./examples/message-get.sh) |
 | [Get Chats](#get-chats) | List all conversations | `GET /chats` | [chat-list.sh](./examples/chat-list.sh) |
 | [Get Chat](#get-chat) | Get chat details | `GET /chats/:id` | [chat-list.sh](./examples/chat-list.sh) |
 | [Chat Messages](#chat-messages) | Get messages from chat | `GET /chats/:id/messages` | [chat-list.sh](./examples/chat-list.sh) |
-| [Mark Read/Unread](#mark-readunread) | Update read status | `POST /chats/:id/read` | - |
+| [Mark Read/Unread](#mark-readunread) | Update read status | `POST /chats/:id/read` | [chat-read.sh](./examples/chat-read.sh) |
 | [Typing Indicators](#typing-indicators) | Show "typing..." status | `POST /chats/:id/typing` | [chat-typing.sh](./examples/chat-typing.sh) |
 | [Create Groups](#create-groups) | Start group chats | `POST /groups` | [group-create.sh](./examples/group-create.sh) |
 | [Update Groups](#update-groups) | Rename groups | `PATCH /groups/:id` | [group-create.sh](./examples/group-create.sh) |
-| [Group Icons](#group-icons) | Set/remove group icons | `POST /groups/:id/icon` | - |
 | [Create Polls](#create-polls) | Create interactive polls | `POST /polls` | [poll-create.sh](./examples/poll-create.sh) |
 | [Download Attachments](#download-attachments) | Get received files | `GET /attachments/:id` | [attachment-download.sh](./examples/attachment-download.sh) |
-| [Attachment Info](#attachment-info) | Get file metadata | `GET /attachments/:id/info` | - |
+| [Attachment Info](#attachment-info) | Get file metadata | `GET /attachments/:id/info` | [attachment-info.sh](./examples/attachment-info.sh) |
 | [Check iMessage](#check-imessage) | Verify contact availability | `GET /check/:address` | [service-check.sh](./examples/service-check.sh) |
 | [Get Contacts](#get-contacts) | List device contacts | `GET /contacts` | [contact-list.sh](./examples/contact-list.sh) |
 | [Get Handles](#get-handles) | List contact handles | `GET /handles` | [contact-list.sh](./examples/contact-list.sh) |
-| [Share Contact Card](#share-contact-card) | Share your info | `POST /chats/:id/contact/share` | - |
-| [Contact Share Status](#contact-share-status) | Check if sharing recommended | `GET /chats/:id/contact/status` | - |
+| [Share Contact Card](#share-contact-card) | Share your info | `POST /chats/:id/contact/share` | [contact-share.sh](./examples/contact-share.sh) |
+| [Contact Share Status](#contact-share-status) | Check if sharing recommended | `GET /chats/:id/contact/status` | [contact-share.sh](./examples/contact-share.sh) |
 | [Server Info](#server-info) | Get server details | `GET /server` | [server-info.sh](./examples/server-info.sh) |
-| [Health Check](#health-check) | Basic health check | `GET /health` | - |
+| [Health Check](#health-check) | Basic health check | `GET /health` | [health-check.sh](./examples/health-check.sh) |
 | [WebSocket Events](#websocket-events) | Real-time event subscription | `WS /ws` | - |
 
 ---
@@ -470,6 +469,7 @@ Some endpoints may also return resource-specific error codes such as `POLL_NOT_F
 | ------- | ------ | ------ |
 | Add Group Members | ⚠️ | May timeout on some systems (upstream limitation) |
 | Remove Group Members | ❌ | Upstream API compatibility issue - currently not functional |
+| Set/Remove Group Icon | ⚠️ | API returns success but icon may not appear (upstream sync issue) |
 | Get Poll Details | ⚠️ | May return `POLL_NOT_FOUND` even when poll exists (upstream sync issue) |
 | Poll Vote/Unvote/Options | ⚠️ | Operations succeed but lack server-side validation |
 
@@ -482,17 +482,22 @@ All example scripts are in the [`examples/`](./examples) directory:
 - [`send-message.sh`](./examples/send-message.sh) - Send messages
 - [`send-file.sh`](./examples/send-file.sh) - Send attachments
 - [`send-sticker.sh`](./examples/send-sticker.sh) - Send stickers
+- [`message-get.sh`](./examples/message-get.sh) - Get message details
 - [`message-edit.sh`](./examples/message-edit.sh) - Unsend (retract) messages
 - [`message-react.sh`](./examples/message-react.sh) - Tapbacks
 - [`message-search.sh`](./examples/message-search.sh) - Search messages
 - [`poll-create.sh`](./examples/poll-create.sh) - Create/manage polls
 - [`chat-list.sh`](./examples/chat-list.sh) - List chats
+- [`chat-read.sh`](./examples/chat-read.sh) - Mark read/unread
 - [`chat-typing.sh`](./examples/chat-typing.sh) - Typing indicators
 - [`group-create.sh`](./examples/group-create.sh) - Group management
 - [`attachment-download.sh`](./examples/attachment-download.sh) - Download files
+- [`attachment-info.sh`](./examples/attachment-info.sh) - Attachment metadata
 - [`contact-list.sh`](./examples/contact-list.sh) - List contacts
+- [`contact-share.sh`](./examples/contact-share.sh) - Share contact card
 - [`server-info.sh`](./examples/server-info.sh) - Server info
 - [`service-check.sh`](./examples/service-check.sh) - Check iMessage availability
+- [`health-check.sh`](./examples/health-check.sh) - Health check
 
 ---
 
