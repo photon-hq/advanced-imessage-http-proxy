@@ -2,7 +2,7 @@
 # Edit and Unsend Message Examples
 
 TOKEN=$(echo -n "https://your-server.com/|your-api-key" | base64)
-API="http://localhost:3000"
+API="https://imessage-swagger.photon.codes"
 
 # Edit a message
 curl -X PATCH "$API/messages/MESSAGE_GUID" \

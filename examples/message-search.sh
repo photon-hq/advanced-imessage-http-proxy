@@ -2,7 +2,7 @@
 # Search and Query Messages Examples
 
 TOKEN=$(echo -n "https://your-server.com/|your-api-key" | base64)
-API="http://localhost:3000"
+API="https://imessage-swagger.photon.codes"
 
 # List recent messages
 curl "$API/messages?limit=50" -H "Authorization: Bearer $TOKEN"
