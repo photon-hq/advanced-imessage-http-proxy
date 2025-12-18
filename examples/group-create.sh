@@ -2,7 +2,7 @@
 # Group Chat Examples
 
 TOKEN=$(echo -n "https://your-server.com/|your-api-key" | base64)
-API="http://localhost:3000"
+API="https://imessage-swagger.photon.codes"
 
 # Create a group chat
 curl -X POST "$API/groups" \

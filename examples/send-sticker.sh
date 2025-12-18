@@ -11,14 +11,14 @@ RECIPIENT="user@example.com"
 STICKER_FILE="sticker.png"
 
 echo "Send Standalone Sticker"
-curl -X POST http://localhost:3000/send/sticker \
+curl -X POST https://imessage-swagger.photon.codes/send/sticker \
   -H "Authorization: Bearer $TOKEN" \
   -F "to=$RECIPIENT" \
   -F "file=@$STICKER_FILE"
 
 echo -e "\n\nSend Reply Sticker (attach to message)"
 MESSAGE_GUID="your-message-guid"
-curl -X POST http://localhost:3000/send/sticker \
+curl -X POST https://imessage-swagger.photon.codes/send/sticker \
   -H "Authorization: Bearer $TOKEN" \
   -F "to=$RECIPIENT" \
   -F "file=@$STICKER_FILE" \

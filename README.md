@@ -55,6 +55,8 @@ bun run src/index.ts
 
 Server runs at `http://localhost:3000`. Swagger docs at `http://localhost:3000/swagger`.
 
+> **Note**: The examples below use the centrally hosted endpoint `https://imessage-swagger.photon.codes`. If you're self-hosting, replace with your own URL (e.g., `http://localhost:3000`).
+
 ### Authentication
 
 Generate a token from your Advanced iMessage Kit server URL and API key:
@@ -72,13 +74,13 @@ Authorization: Bearer $TOKEN
 
 ```bash
 # Send a message
-curl -X POST http://localhost:3000/send \
+curl -X POST https://imessage-swagger.photon.codes/send \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"to": "user@example.com", "text": "Hello!"}'
 
 # List chats
-curl http://localhost:3000/chats -H "Authorization: Bearer $TOKEN"
+curl https://imessage-swagger.photon.codes/chats -H "Authorization: Bearer $TOKEN"
 ```
 
 ---
@@ -103,19 +105,19 @@ Send text messages to any contact with optional effects.
 
 ```bash
 # Simple text
-curl -X POST http://localhost:3000/send \
+curl -X POST https://imessage-swagger.photon.codes/send \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"to": "user@example.com", "text": "Hello!"}'
 
 # With effect
-curl -X POST http://localhost:3000/send \
+curl -X POST https://imessage-swagger.photon.codes/send \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"to": "user@example.com", "text": "🎉", "effect": "confetti"}'
 
 # Reply to message
-curl -X POST http://localhost:3000/send \
+curl -X POST https://imessage-swagger.photon.codes/send \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"to": "user@example.com", "text": "Reply", "replyTo": "MESSAGE_GUID"}'
@@ -131,13 +133,13 @@ Send images, files, or audio messages.
 
 ```bash
 # Image/file
-curl -X POST http://localhost:3000/send/file \
+curl -X POST https://imessage-swagger.photon.codes/send/file \
   -H "Authorization: Bearer $TOKEN" \
   -F "to=user@example.com" \
   -F "file=@photo.jpg"
 
 # Audio message
-curl -X POST http://localhost:3000/send/file \
+curl -X POST https://imessage-swagger.photon.codes/send/file \
   -H "Authorization: Bearer $TOKEN" \
   -F "to=user@example.com" \
   -F "file=@audio.m4a" \
@@ -152,13 +154,13 @@ Send stickers as standalone messages or attach to existing messages.
 
 ```bash
 # Standalone sticker
-curl -X POST http://localhost:3000/send/sticker \
+curl -X POST https://imessage-swagger.photon.codes/send/sticker \
   -H "Authorization: Bearer $TOKEN" \
   -F "to=user@example.com" \
   -F "file=@sticker.png"
 
 # Reply sticker (attach to message bubble)
-curl -X POST http://localhost:3000/send/sticker \
+curl -X POST https://imessage-swagger.photon.codes/send/sticker \
   -H "Authorization: Bearer $TOKEN" \
   -F "to=user@example.com" \
   -F "file=@sticker.png" \
@@ -182,13 +184,13 @@ Add or remove reactions to messages.
 
 ```bash
 # Add reaction (types: love, like, dislike, laugh, emphasize, question)
-curl -X POST http://localhost:3000/messages/MESSAGE_GUID/react \
+curl -X POST https://imessage-swagger.photon.codes/messages/MESSAGE_GUID/react \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat": "user@example.com", "type": "love"}'
 
 # Remove reaction
-curl -X DELETE http://localhost:3000/messages/MESSAGE_GUID/react \
+curl -X DELETE https://imessage-swagger.photon.codes/messages/MESSAGE_GUID/react \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat": "user@example.com", "type": "love"}'
@@ -202,15 +204,15 @@ List and search messages.
 
 ```bash
 # List messages
-curl "http://localhost:3000/messages?limit=50" \
+curl "https://imessage-swagger.photon.codes/messages?limit=50" \
   -H "Authorization: Bearer $TOKEN"
 
 # Filter by chat
-curl "http://localhost:3000/messages?chat=user@example.com&limit=50" \
+curl "https://imessage-swagger.photon.codes/messages?chat=user@example.com&limit=50" \
   -H "Authorization: Bearer $TOKEN"
 
 # Search
-curl "http://localhost:3000/messages/search?q=hello" \
+curl "https://imessage-swagger.photon.codes/messages/search?q=hello" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -222,19 +224,19 @@ List and manage conversations.
 
 ```bash
 # List chats
-curl http://localhost:3000/chats \
+curl https://imessage-swagger.photon.codes/chats \
   -H "Authorization: Bearer $TOKEN"
 
 # Get chat details
-curl http://localhost:3000/chats/user@example.com \
+curl https://imessage-swagger.photon.codes/chats/user@example.com \
   -H "Authorization: Bearer $TOKEN"
 
 # Get chat messages
-curl "http://localhost:3000/chats/user@example.com/messages?limit=50" \
+curl "https://imessage-swagger.photon.codes/chats/user@example.com/messages?limit=50" \
   -H "Authorization: Bearer $TOKEN"
 
 # Mark as read
-curl -X POST http://localhost:3000/chats/user@example.com/read \
+curl -X POST https://imessage-swagger.photon.codes/chats/user@example.com/read \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -246,11 +248,11 @@ Show typing status in chat.
 
 ```bash
 # Start typing
-curl -X POST http://localhost:3000/chats/user@example.com/typing \
+curl -X POST https://imessage-swagger.photon.codes/chats/user@example.com/typing \
   -H "Authorization: Bearer $TOKEN"
 
 # Stop typing
-curl -X DELETE http://localhost:3000/chats/user@example.com/typing \
+curl -X DELETE https://imessage-swagger.photon.codes/chats/user@example.com/typing \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -262,19 +264,19 @@ Create and manage group chats.
 
 ```bash
 # Create group
-curl -X POST http://localhost:3000/groups \
+curl -X POST https://imessage-swagger.photon.codes/groups \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"members": ["a@x.com", "b@x.com"], "name": "My Group"}'
 
 # Rename
-curl -X PATCH http://localhost:3000/groups/GROUP_ID \
+curl -X PATCH https://imessage-swagger.photon.codes/groups/GROUP_ID \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name": "New Name"}'
 
 # Set icon
-curl -X POST http://localhost:3000/groups/GROUP_ID/icon \
+curl -X POST https://imessage-swagger.photon.codes/groups/GROUP_ID/icon \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@icon.png"
 ```
@@ -289,7 +291,7 @@ Create and manage interactive polls.
 
 ```bash
 # Create poll
-RESP=$(curl -s -X POST http://localhost:3000/polls \
+RESP=$(curl -s -X POST https://imessage-swagger.photon.codes/polls \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"to": "group:abc", "question": "Lunch?", "options": ["Pizza", "Burger"]}')
@@ -298,23 +300,23 @@ POLL_ID=$(echo "$RESP" | jq -r '.data.id')
 OPTION_ID=$(echo "$RESP" | jq -r '.data.options[0].id')
 
 # Get poll details
-curl http://localhost:3000/polls/$POLL_ID \
+curl https://imessage-swagger.photon.codes/polls/$POLL_ID \
   -H "Authorization: Bearer $TOKEN"
 
 # Vote
-curl -X POST http://localhost:3000/polls/$POLL_ID/vote \
+curl -X POST https://imessage-swagger.photon.codes/polls/$POLL_ID/vote \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"chat\": \"group:abc\", \"optionId\": \"$OPTION_ID\"}"
 
 # Unvote
-curl -X POST http://localhost:3000/polls/$POLL_ID/unvote \
+curl -X POST https://imessage-swagger.photon.codes/polls/$POLL_ID/unvote \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"chat\": \"group:abc\", \"optionId\": \"$OPTION_ID\"}"
 
 # Add option
-curl -X POST http://localhost:3000/polls/$POLL_ID/options \
+curl -X POST https://imessage-swagger.photon.codes/polls/$POLL_ID/options \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat": "group:abc", "text": "Sushi"}'
@@ -330,11 +332,11 @@ Download received files and media.
 
 ```bash
 # Get attachment info
-curl http://localhost:3000/attachments/GUID/info \
+curl https://imessage-swagger.photon.codes/attachments/GUID/info \
   -H "Authorization: Bearer $TOKEN"
 
 # Download
-curl http://localhost:3000/attachments/GUID \
+curl https://imessage-swagger.photon.codes/attachments/GUID \
   -H "Authorization: Bearer $TOKEN" \
   -o file.jpg
 ```
@@ -346,7 +348,7 @@ curl http://localhost:3000/attachments/GUID \
 Verify if a contact uses iMessage.
 
 ```bash
-curl http://localhost:3000/check/user@example.com \
+curl https://imessage-swagger.photon.codes/check/user@example.com \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -358,19 +360,19 @@ List device contacts and handles.
 
 ```bash
 # Get contacts
-curl http://localhost:3000/contacts \
+curl https://imessage-swagger.photon.codes/contacts \
   -H "Authorization: Bearer $TOKEN"
 
 # Get handles
-curl http://localhost:3000/handles \
+curl https://imessage-swagger.photon.codes/handles \
   -H "Authorization: Bearer $TOKEN"
 
 # Share contact card
-curl -X POST http://localhost:3000/chats/user@example.com/contact/share \
+curl -X POST https://imessage-swagger.photon.codes/chats/user@example.com/contact/share \
   -H "Authorization: Bearer $TOKEN"
 
 # Check if sharing recommended
-curl http://localhost:3000/chats/user@example.com/contact/status \
+curl https://imessage-swagger.photon.codes/chats/user@example.com/contact/status \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -384,11 +386,11 @@ Get server information and statistics.
 
 ```bash
 # Server info
-curl http://localhost:3000/server \
+curl https://imessage-swagger.photon.codes/server \
   -H "Authorization: Bearer $TOKEN"
 
 # Health check (no auth required)
-curl http://localhost:3000/health
+curl https://imessage-swagger.photon.codes/health
 ```
 
 > Example: [server-info.sh](./examples/server-info.sh)
@@ -403,7 +405,7 @@ Subscribe to real-time events:
 import WebSocket from "ws"
 
 const token = "YOUR_BASE64_TOKEN"
-const ws = new WebSocket("ws://localhost:3000/ws", {
+const ws = new WebSocket("wss://imessage-swagger.photon.codes/ws", {
   headers: { Authorization: `Bearer ${token}` }
 })
 

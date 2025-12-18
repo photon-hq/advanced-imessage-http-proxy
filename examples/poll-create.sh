@@ -8,7 +8,7 @@ SERVER_URL="https://your-server.com/"
 API_KEY="your-api-key"
 TO="user1@example.com"
 GROUP_MEMBER="+1234567890"
-API="http://localhost:3000"
+API="https://imessage-swagger.photon.codes"
 TOKEN=$(echo -n "$SERVER_URL|$API_KEY" | base64)
 
 require() {
