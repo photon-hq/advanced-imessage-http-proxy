@@ -290,7 +290,7 @@ curl -X POST https://imessage-swagger.photon.codes/groups/GROUP_ID/icon \
 
 ### Create Polls
 
-Create interactive polls in group chats.
+Create interactive polls.
 
 ```bash
 # Create poll
