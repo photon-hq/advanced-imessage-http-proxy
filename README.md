@@ -30,6 +30,10 @@ Advanced iMessage HTTP Proxy is a RESTful API that proxies requests to Advanced 
 | [Create Groups](#create-groups) | Start group chats | `POST /groups` | [group-create.sh](./examples/group-create.sh) |
 | [Update Groups](#update-groups) | Rename groups | `PATCH /groups/:id` | [group-create.sh](./examples/group-create.sh) |
 | [Create Polls](#create-polls) | Create interactive polls | `POST /polls` | [poll-create.sh](./examples/poll-create.sh) |
+| [Get Poll Details](#get-poll-details) | Get poll info and options | `GET /polls/:id` | [poll-get.sh](./examples/poll-get.sh) |
+| [Poll Vote](#poll-vote) | Vote on a poll option | `POST /polls/:id/vote` | [poll-vote.sh](./examples/poll-vote.sh) |
+| [Poll Unvote](#poll-unvote) | Remove vote from poll | `POST /polls/:id/unvote` | [poll-unvote.sh](./examples/poll-unvote.sh) |
+| [Poll Add Options](#poll-add-options) | Add option to existing poll | `POST /polls/:id/options` | [poll-options.sh](./examples/poll-options.sh) |
 | [Download Attachments](#download-attachments) | Get received files | `GET /attachments/:id` | [attachment-download.sh](./examples/attachment-download.sh) |
 | [Attachment Info](#attachment-info) | Get file metadata | `GET /attachments/:id/info` | [attachment-info.sh](./examples/attachment-info.sh) |
 | [Check iMessage](#check-imessage) | Verify contact availability | `GET /check/:address` | [service-check.sh](./examples/service-check.sh) |
@@ -286,7 +290,7 @@ curl -X POST https://imessage-swagger.photon.codes/groups/GROUP_ID/icon \
 
 ### Create Polls
 
-Create and manage interactive polls.
+Create interactive polls.
 
 ```bash
 # Create poll
@@ -297,33 +301,59 @@ RESP=$(curl -s -X POST https://imessage-swagger.photon.codes/polls \
 
 POLL_ID=$(echo "$RESP" | jq -r '.data.id')
 OPTION_ID=$(echo "$RESP" | jq -r '.data.options[0].id')
+```
 
-# Get poll details
+> Example: [poll-create.sh](./examples/poll-create.sh)
+
+### Get Poll Details
+
+Retrieve poll information and options.
+
+```bash
 curl https://imessage-swagger.photon.codes/polls/$POLL_ID \
   -H "Authorization: Bearer $TOKEN"
+```
 
-# Vote
+> Example: [poll-get.sh](./examples/poll-get.sh)
+
+### Poll Vote
+
+Vote on a poll option.
+
+```bash
 curl -X POST https://imessage-swagger.photon.codes/polls/$POLL_ID/vote \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"chat\": \"group:abc\", \"optionId\": \"$OPTION_ID\"}"
+```
 
-# Unvote
+> Example: [poll-vote.sh](./examples/poll-vote.sh)
+
+### Poll Unvote
+
+Remove your vote from a poll option.
+
+```bash
 curl -X POST https://imessage-swagger.photon.codes/polls/$POLL_ID/unvote \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"chat\": \"group:abc\", \"optionId\": \"$OPTION_ID\"}"
+```
 
-# Add option
+> Example: [poll-unvote.sh](./examples/poll-unvote.sh)
+
+### Poll Add Options
+
+Add a new option to an existing poll.
+
+```bash
 curl -X POST https://imessage-swagger.photon.codes/polls/$POLL_ID/options \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat": "group:abc", "text": "Sushi"}'
 ```
 
-> ⚠️ **Note**: Poll retrieval and voting operations have known limitations. See [Known Limitations](#known-limitations).
-
-> Example: [poll-create.sh](./examples/poll-create.sh)
+> Example: [poll-options.sh](./examples/poll-options.sh)
 
 ### Download Attachments
 
@@ -470,8 +500,6 @@ Some endpoints may also return resource-specific error codes such as `POLL_NOT_F
 | Add Group Members | ⚠️ | May timeout on some systems (upstream limitation) |
 | Remove Group Members | ❌ | Upstream API compatibility issue - currently not functional |
 | Set/Remove Group Icon | ⚠️ | API returns success but icon may not appear (upstream sync issue) |
-| Get Poll Details | ⚠️ | May return `POLL_NOT_FOUND` even when poll exists (upstream sync issue) |
-| Poll Vote/Unvote/Options | ⚠️ | Operations succeed but lack server-side validation |
 
 ---
 
@@ -486,7 +514,11 @@ All example scripts are in the [`examples/`](./examples) directory:
 - [`message-edit.sh`](./examples/message-edit.sh) - Unsend (retract) messages
 - [`message-react.sh`](./examples/message-react.sh) - Tapbacks
 - [`message-search.sh`](./examples/message-search.sh) - Search messages
-- [`poll-create.sh`](./examples/poll-create.sh) - Create/manage polls
+- [`poll-create.sh`](./examples/poll-create.sh) - Create polls
+- [`poll-get.sh`](./examples/poll-get.sh) - Get poll details
+- [`poll-vote.sh`](./examples/poll-vote.sh) - Vote on poll
+- [`poll-unvote.sh`](./examples/poll-unvote.sh) - Remove vote from poll
+- [`poll-options.sh`](./examples/poll-options.sh) - Add poll option
 - [`chat-list.sh`](./examples/chat-list.sh) - List chats
 - [`chat-read.sh`](./examples/chat-read.sh) - Mark read/unread
 - [`chat-typing.sh`](./examples/chat-typing.sh) - Typing indicators
