@@ -2,7 +2,7 @@
 # Remove vote from a poll option
 
 TOKEN="${TOKEN:-YOUR_BASE64_TOKEN}"
-API="${API:-https://imessage-swagger.photon.codes}"
+API="https://imessage-swagger.photon.codes"
 
 # Replace with actual values
 POLL_ID="${1:-POLL_MESSAGE_GUID}"
