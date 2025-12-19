@@ -86,7 +86,7 @@ export function setupPollRoutes(app: any): void {
     // GET /polls/:id - Get poll details
     app.get("/polls/:id", createHandler(async (auth, { params }) => {
         try {
-            const message: any = await withSdk(auth, sdk => sdk.messages.getMessage(params.id))
+            const message: any = await withSdk(auth, sdk => sdk.messages.getMessage(params.id, { with: ['payloadData'] }))
             const parsed = parsePollDefinition(message)
             
             if (parsed?.options?.length) {
