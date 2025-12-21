@@ -43,7 +43,7 @@ Advanced iMessage HTTP Proxy is a RESTful API that proxies requests to Advanced 
 | [Contact Share Status](#contact-share-status) | Check if sharing recommended | `GET /chats/:id/contact/status` | [contact-share.sh](./examples/contact-share.sh) |
 | [Server Info](#server-info) | Get server details | `GET /server` | [server-info.sh](./examples/server-info.sh) |
 | [Health Check](#health-check) | Basic health check | `GET /health` | [health-check.sh](./examples/health-check.sh) |
-| [WebSocket Events](#websocket-events) | Real-time event subscription | `WS /ws` | - |
+| [Real-time Events](#real-time-events-socketio) | Socket.IO event subscription | Socket.IO | [auto-reply-bot.ts](./examples/auto-reply-bot.ts) |
 
 ---
 
@@ -426,46 +426,56 @@ curl https://imessage-swagger.photon.codes/health
 
 ---
 
-## WebSocket Events
+## Real-time Events (Socket.IO)
 
-Subscribe to real-time events:
+Subscribe to real-time events via Socket.IO:
 
 ```javascript
-import WebSocket from "ws"
+import { io } from "socket.io-client"
 
 const token = "YOUR_BASE64_TOKEN"
-const ws = new WebSocket("wss://imessage-swagger.photon.codes/ws", {
-  headers: { Authorization: `Bearer ${token}` }
+const socket = io("https://imessage-swagger.photon.codes", {
+  auth: { token }
 })
 
-ws.on("message", (raw) => {
-  const msg = JSON.parse(raw.toString())
-  console.log(msg.event, msg.data)
+// New message received
+socket.on("new-message", (message) => {
+  console.log("New message:", message.text)
+  console.log("From:", message.handle?.address)
 })
-```
 
-**Event Format:**
-```json
-{
-  "event": "event-name",
-  "data": { /* payload */ },
-  "timestamp": 1700000000000
-}
+// Message updated (delivered, read, etc.)
+socket.on("updated-message", (message) => {
+  if (message.dateRead) console.log("Message read")
+  else if (message.dateDelivered) console.log("Message delivered")
+})
+
+// Send failed
+socket.on("message-send-error", (data) => {
+  console.error("Send failed:", data)
+})
+
+// Other events
+socket.on("typing-indicator", (data) => console.log("Typing:", data))
+socket.on("chat-read-status-changed", (data) => console.log("Read status:", data))
 ```
 
 **Supported Events:**
 - `new-message` - New message received
-- `updated-message` - Message updated
-- `message-send-error` - Message send failed
-- `typing-indicator` - Typing status changed
+- `updated-message` - Message updated (delivered, read, edited)
 - `chat-read-status-changed` - Read status changed
 - `group-name-change` - Group renamed
 - `participant-added` - Member added
 - `participant-removed` - Member removed
 - `participant-left` - Member left
-- `group-icon-changed` - Icon updated
-- `group-icon-removed` - Icon removed
-- `new-findmy-location` - Location shared
+- `group-icon-changed` - Group icon updated
+- `group-icon-removed` - Group icon removed
+- `message-send-error` - Message send failed
+- `typing-indicator` - Typing status changed
+- `new-server` - New server connected
+- `incoming-facetime` - Incoming FaceTime call
+- `ft-call-status-changed` - FaceTime call status changed
+- `hello-world` - Connection test event
 
 ---
 
