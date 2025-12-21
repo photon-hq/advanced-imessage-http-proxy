@@ -2,7 +2,6 @@ import { Elysia } from "elysia"
 import { swagger } from "@elysiajs/swagger"
 
 import { setupRoutes } from "./routes"
-import { setupWebSocket } from "./ws/handler"
 import { mapError } from "./middleware/error"
 
 const OPENAPI_DESCRIPTION = [
@@ -26,9 +25,21 @@ const OPENAPI_DESCRIPTION = [
     "",
     "Rate limits are enforced by the upstream iMessage server, not this proxy.",
     "",
-    "## WebSocket",
+    "## Real-time Events (Socket.IO)",
     "",
-    "Real-time events are available via WebSocket at `/ws`. Connect with the same Bearer token in the `Authorization` header.",
+    "Connect via Socket.IO for real-time events:",
+    "",
+    "```javascript",
+    "import { io } from \"socket.io-client\"",
+    "",
+    "const socket = io(\"https://your-proxy.com\", {",
+    "  auth: { token: \"YOUR_BASE64_TOKEN\" }",
+    "})",
+    "",
+    "socket.on(\"new-message\", (message) => {",
+    "  console.log(\"New message:\", message.text)",
+    "})",
+    "```",
 ].join("\n")
 
 export function createApp() {
@@ -76,7 +87,6 @@ export function createApp() {
         })
 
     setupRoutes(app)
-    setupWebSocket(app)
 
     return app
 }
