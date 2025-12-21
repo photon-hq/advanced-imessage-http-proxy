@@ -20,7 +20,7 @@ const EVENTS = [
     "new-server",
     "incoming-facetime",
     "ft-call-status-changed",
-    "hello-world",
+    "hello-world", // SDK connection test event
 ] as const
 
 const io = new Server()
@@ -112,7 +112,8 @@ io.on("connection", async (socket) => {
         }
 
         await initPromise
-        activeSockets.get(key)!.add(socket)
+        const sockets = activeSockets.get(key)
+        if (sockets) sockets.add(socket)
         socket.emit("ready")
 
     } catch (error) {

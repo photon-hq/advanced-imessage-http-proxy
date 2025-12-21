@@ -6,7 +6,7 @@ const app = createApp()
 
 export default {
     port: PORT,
-    idleTimeout: 30, // Must be greater than Socket.IO pingInterval (default 25s)
+    idleTimeout: 60, // Must be greater than Socket.IO pingInterval (default 25s)
 
     fetch(req: Request, server: any) {
         return isSocketIORequest(new URL(req.url))
