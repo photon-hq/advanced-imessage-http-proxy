@@ -4,6 +4,8 @@
 import { t } from "elysia"
 import { createHandler, withSdk, toChatGuid, fromChatGuid } from "../core/auth"
 
+const DEFAULT_SERVICE = "iMessage"
+
 export function setupChatRoutes(app: any): void {
     // GET /chats - List chats
     app.get("/chats", createHandler(async (auth, { query }) => {
@@ -69,6 +71,44 @@ export function setupChatRoutes(app: any): void {
             }),
         }),
         detail: { tags: ["Chats"], summary: "Get chat details" },
+    })
+
+    // GET /chats/:id/participants - Get chat participants
+    app.get("/chats/:id/participants", createHandler(async (auth, { params }) => {
+        const chatGuid = toChatGuid(params.id)
+        const chat: any = await withSdk(auth, sdk => sdk.chats.getChat(chatGuid))
+
+        return {
+            ok: true,
+            data: {
+                chatId: fromChatGuid(chat.guid),
+                chatName: chat.displayName || null,
+                participants: chat.participants?.map((p: any) => ({
+                    address: p.address,
+                    service: p.service || DEFAULT_SERVICE,
+                })) || [],
+            }
+        }
+    }), {
+        params: t.Object({
+            id: t.String({ description: "Chat identifier (phone, email, or group:xxx)" }),
+        }),
+        response: t.Object({
+            ok: t.Literal(true),
+            data: t.Object({
+                chatId: t.String(),
+                chatName: t.Nullable(t.String()),
+                participants: t.Array(t.Object({
+                    address: t.String(),
+                    service: t.String(),
+                })),
+            }),
+        }),
+        detail: {
+            tags: ["Chats"],
+            summary: "Get chat participants",
+            description: "Get the list of participants in a chat (primarily useful for group chats). Returns participant addresses and service types.",
+        },
     })
 
     // GET /chats/:id/messages - Get chat messages
