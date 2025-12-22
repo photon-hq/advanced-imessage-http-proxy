@@ -8,8 +8,8 @@ import { withTempFile } from "../core/upload"
 export function setupMessageRoutes(app: any): void {
     // POST /send - Send message
     app.post("/send", createHandler(async (auth, { body }) => {
-        const { to, text, subject, effect, replyTo } = body
-        const chatGuid = toChatGuid(to)
+        const { to, text, subject, effect, replyTo, service } = body
+        const chatGuid = toChatGuid(to, service)
         const effectId = effect ? `com.apple.messages.effect.CK${effect.charAt(0).toUpperCase() + effect.slice(1)}Effect` : undefined
 
         const result: any = await withSdk(auth, sdk => sdk.messages.sendMessage({
@@ -32,6 +32,10 @@ export function setupMessageRoutes(app: any): void {
                 t.Literal("spotlight"),
             ], { description: "Full-screen animation when recipient opens the message" })),
             replyTo: t.Optional(t.String({ maxLength: 128, description: "Reply to a specific message (paste its ID here)" })),
+            service: t.Optional(t.Union([
+                t.Literal("iMessage"),
+                t.Literal("SMS"),
+            ], { description: "Force message type: iMessage (blue) or SMS (green). If not specified, server decides." })),
         }),
         response: t.Object({
             ok: t.Literal(true),
@@ -45,14 +49,14 @@ export function setupMessageRoutes(app: any): void {
         detail: {
             tags: ["Messages"],
             summary: "Send a text message",
-            description: "Send a text message through the configured iMessage server. Supports screen effects, replies, and subject lines.",
+            description: "Send a text message through the configured iMessage server. Supports screen effects, replies, and subject lines. Use 'service' to force SMS or iMessage.",
         },
     })
 
     // POST /send/file - Send file
     app.post("/send/file", createHandler(async (auth, { body }) => {
-        const { to, file, audio } = body
-        const chatGuid = toChatGuid(to)
+        const { to, file, audio, service } = body
+        const chatGuid = toChatGuid(to, service)
 
         const result: any = await withSdk(auth, sdk =>
             withTempFile(file, path => sdk.attachments.sendAttachment({
@@ -73,6 +77,7 @@ export function setupMessageRoutes(app: any): void {
             to: t.String({ minLength: 1, maxLength: 256, description: "Who to send to: phone, email, or group ID" }),
             file: t.File({ maxSize: 100 * 1024 * 1024, description: "The file to send (photos, videos, documents, etc.)" }),
             audio: t.Optional(t.Union([t.Boolean(), t.String()], { description: "Set to true to send as an audio message (audio files only)" })),
+            service: t.Optional(t.Union([t.Literal("iMessage"), t.Literal("SMS")], { description: "Force iMessage or SMS" })),
         }),
         response: t.Object({
             ok: t.Literal(true),
@@ -96,8 +101,8 @@ export function setupMessageRoutes(app: any): void {
 
     // POST /send/sticker - Send sticker
     app.post("/send/sticker", createHandler(async (auth, { body }) => {
-        const { to, file, replyTo, stickerX, stickerY, stickerScale, stickerRotation, stickerWidth } = body
-        const chatGuid = toChatGuid(to)
+        const { to, file, replyTo, stickerX, stickerY, stickerScale, stickerRotation, stickerWidth, service } = body
+        const chatGuid = toChatGuid(to, service)
 
         const result: any = await withSdk(auth, sdk =>
             withTempFile(file, path => sdk.attachments.sendSticker({
@@ -140,6 +145,7 @@ export function setupMessageRoutes(app: any): void {
             stickerScale: t.Optional(t.Union([t.Number(), t.String()], { description: "Scale (0-1), default 0.75" })),
             stickerRotation: t.Optional(t.Union([t.Number(), t.String()], { description: "Rotation in radians, default 0" })),
             stickerWidth: t.Optional(t.Union([t.Number(), t.String()], { description: "Width in pixels, default 300" })),
+            service: t.Optional(t.Union([t.Literal("iMessage"), t.Literal("SMS")], { description: "Force iMessage or SMS" })),
         }),
         response: t.Object({
             ok: t.Literal(true),
