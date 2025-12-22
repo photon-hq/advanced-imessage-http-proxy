@@ -49,7 +49,7 @@ export function setupMessageRoutes(app: any): void {
         detail: {
             tags: ["Messages"],
             summary: "Send a text message",
-            description: "Send a text message through the configured iMessage server. Supports screen effects, replies, and subject lines. Use 'service' to force SMS or iMessage.",
+            description: "Send a text message through the configured iMessage server. Supports screen effects, replies, and subject lines. Use 'service' to force SMS or iMessage (ignored for group chats).",
         },
     })
 
