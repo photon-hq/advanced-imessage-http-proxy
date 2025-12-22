@@ -3,7 +3,7 @@
  */
 import { sdkPool } from "./sdk-pool"
 import { mapError } from "../middleware/error"
-import {AdvancedIMessageKit} from "@photon-ai/advanced-imessage-kit";
+import { AdvancedIMessageKit } from "@photon-ai/advanced-imessage-kit";
 
 export interface Auth {
     serverUrl: string
@@ -29,9 +29,10 @@ export function parseAuth(authorization: string | undefined): Auth | null {
 }
 
 /** Convert simple address to chatGuid */
-export function toChatGuid(to: string): string {
+export function toChatGuid(to: string, service?: "iMessage" | "SMS"): string {
     if (to.startsWith("group:")) return `any;+;${to.slice(6)}`
-    return `any;-;${to}`
+    const prefix = service || "any"
+    return `${prefix};-;${to}`
 }
 
 /** Extract simple address from chatGuid */
