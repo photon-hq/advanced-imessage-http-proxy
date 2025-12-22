@@ -4,6 +4,8 @@
 import { t } from "elysia"
 import { createHandler, withSdk, toChatGuid, fromChatGuid } from "../core/auth"
 
+const DEFAULT_SERVICE = "iMessage"
+
 export function setupChatRoutes(app: any): void {
     // GET /chats - List chats
     app.get("/chats", createHandler(async (auth, { query }) => {
@@ -83,7 +85,7 @@ export function setupChatRoutes(app: any): void {
                 chatName: chat.displayName || null,
                 participants: chat.participants?.map((p: any) => ({
                     address: p.address,
-                    service: p.service || "iMessage",
+                    service: p.service || DEFAULT_SERVICE,
                 })) || [],
             }
         }
