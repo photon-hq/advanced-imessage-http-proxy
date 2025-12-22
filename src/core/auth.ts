@@ -3,6 +3,7 @@
  */
 import { sdkPool } from "./sdk-pool"
 import { mapError } from "../middleware/error"
+import {AdvancedIMessageKit} from "@photon-ai/advanced-imessage-kit";
 
 export interface Auth {
     serverUrl: string
@@ -40,7 +41,7 @@ export function fromChatGuid(guid: string): string {
 }
 
 /** Execute SDK operation */
-export async function withSdk<T>(auth: Auth, handler: (sdk: any) => Promise<T>): Promise<T> {
+export async function withSdk<T>(auth: Auth, handler: (sdk: AdvancedIMessageKit) => Promise<T>): Promise<T> {
     const sdk = await sdkPool.acquire(auth.serverUrl, auth.apiKey)
     try {
         await sdkPool.ensureConnected(auth.serverUrl, auth.apiKey)

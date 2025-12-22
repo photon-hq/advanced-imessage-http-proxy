@@ -5,7 +5,7 @@
       "name": "imessage-api-gateway",
       "dependencies": {
         "@elysiajs/swagger": "^1.3.1",
-        "@photon-ai/advanced-imessage-kit": "^1.6.1",
+        "@photon-ai/advanced-imessage-kit": "^1.7.0",
         "@socket.io/bun-engine": "^0.1.0",
         "elysia": "^1.4.18",
         "socket.io": "^4.8.1",
@@ -22,7 +22,7 @@
 
     "@elysiajs/swagger": ["@elysiajs/swagger@1.3.1", "", { "dependencies": { "@scalar/themes": "^0.9.52", "@scalar/types": "^0.0.12", "openapi-types": "^12.1.3", "pathe": "^1.1.2" }, "peerDependencies": { "elysia": ">= 1.3.0" } }, "sha512-LcbLHa0zE6FJKWPWKsIC/f+62wbDv3aXydqcNPVPyqNcaUgwvCajIi+5kHEU6GO3oXUCpzKaMsb3gsjt8sLzFQ=="],
 
-    "@photon-ai/advanced-imessage-kit": ["@photon-ai/advanced-imessage-kit@1.6.1", "", { "dependencies": { "axios": "^1.13.2", "form-data": "^4.0.4", "reflect-metadata": "^0.2.2", "socket.io-client": "^4.8.1" }, "peerDependencies": { "typescript": "^5.9.3" } }, "sha512-dItvqx9zTdKAShDINcv+Qf7LvaN1ugGIhdzcNzDuSx6FS5ggG+zvdpldDDRsZ0k/eJ8BWIN/tnnedWUoZKRoeQ=="],
+    "@photon-ai/advanced-imessage-kit": ["@photon-ai/advanced-imessage-kit@1.7.0", "", { "dependencies": { "axios": "^1.13.2", "form-data": "^4.0.4", "reflect-metadata": "^0.2.2", "socket.io-client": "^4.8.1" }, "peerDependencies": { "typescript": "^5.9.3" } }, "sha512-savVvfuuG3aGEE7L9+QzxVKQCjTGDCOLwhjLd1QJlaozGq5FYOR/NHGCHHZmjSTkC3JWFOD4eGGJgAcmBIoxPA=="],
 
     "@scalar/openapi-types": ["@scalar/openapi-types@0.1.1", "", {}, "sha512-NMy3QNk6ytcCoPUGJH0t4NNr36OWXgZhA3ormr3TvhX1NDgoF95wFyodGVH8xiHeUyn2/FxtETm8UBLbB5xEmg=="],
 

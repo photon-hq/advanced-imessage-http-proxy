@@ -76,7 +76,10 @@ export function setupChatRoutes(app: any): void {
     // GET /chats/:id/participants - Get chat participants
     app.get("/chats/:id/participants", createHandler(async (auth, { params }) => {
         const chatGuid = toChatGuid(params.id)
-        const chat: any = await withSdk(auth, sdk => sdk.chats.getChat(chatGuid))
+        const chats = await withSdk(auth, sdk => sdk.chats.getChats())
+        const chat = chats.find(c => c.guid === chatGuid)
+
+        if (!chat) throw new Error(`Chat not found: ${chatGuid}`)
 
         return {
             ok: true,
