@@ -25,6 +25,7 @@ Advanced iMessage HTTP Proxy is a RESTful API that proxies requests to Advanced 
 | [Get Chats](#get-chats) | List all conversations | `GET /chats` | [chat-list.sh](./examples/chat-list.sh) |
 | [Get Chat](#get-chat) | Get chat details | `GET /chats/:id` | [chat-list.sh](./examples/chat-list.sh) |
 | [Chat Messages](#chat-messages) | Get messages from chat | `GET /chats/:id/messages` | [chat-list.sh](./examples/chat-list.sh) |
+| [Chat Participants](#chat-participants) | Get group chat participants | `GET /chats/:id/participants` | [chat-participants.sh](./examples/chat-participants.sh) |
 | [Mark Read/Unread](#mark-readunread) | Update read status | `POST /chats/:id/read` | [chat-read.sh](./examples/chat-read.sh) |
 | [Typing Indicators](#typing-indicators) | Show "typing..." status | `POST /chats/:id/typing` | [chat-typing.sh](./examples/chat-typing.sh) |
 | [Create Groups](#create-groups) | Start group chats | `POST /groups` | [group-create.sh](./examples/group-create.sh) |
@@ -244,6 +245,22 @@ curl -X POST https://imessage-swagger.photon.codes/chats/user@example.com/read \
 ```
 
 > Example: [chat-list.sh](./examples/chat-list.sh)
+
+### Chat Participants
+
+Get the list of participants in a chat, particularly useful for group chats.
+
+```bash
+# Get participants from a group chat
+curl https://imessage-swagger.photon.codes/chats/group:abc123/participants \
+  -H "Authorization: Bearer $TOKEN"
+
+# Works with any chat (1-on-1 or group)
+curl https://imessage-swagger.photon.codes/chats/user@example.com/participants \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+> Example: [chat-participants.sh](./examples/chat-participants.sh)
 
 ### Typing Indicators
 
@@ -530,6 +547,7 @@ All example scripts are in the [`examples/`](./examples) directory:
 - [`poll-unvote.sh`](./examples/poll-unvote.sh) - Remove vote from poll
 - [`poll-options.sh`](./examples/poll-options.sh) - Add poll option
 - [`chat-list.sh`](./examples/chat-list.sh) - List chats
+- [`chat-participants.sh`](./examples/chat-participants.sh) - Get chat participants
 - [`chat-read.sh`](./examples/chat-read.sh) - Mark read/unread
 - [`chat-typing.sh`](./examples/chat-typing.sh) - Typing indicators
 - [`group-create.sh`](./examples/group-create.sh) - Group management
