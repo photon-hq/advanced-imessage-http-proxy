@@ -5,19 +5,49 @@ import { t } from "elysia"
 import { parsePollDefinition } from "@photon-ai/advanced-imessage-kit"
 import { createHandler, withSdk, toChatGuid } from "../core/auth"
 
+/**
+ * Check if error is due to chat not existing
+ */
+function isChatNotExistError(error: any): boolean {
+    return error?.message?.includes("Chat does not exist") ||
+        error?.response?.data?.error?.message?.includes("Chat does not exist")
+}
+
 export function setupPollRoutes(app: any): void {
     // POST /polls - Create poll
     app.post("/polls", createHandler(async (auth, { body }) => {
-        const { to, question, options } = body
-        const chatGuid = toChatGuid(to)
+        const { to, question, options, service } = body
+        const chatGuid = toChatGuid(to, service)
 
-        const created: any = await withSdk(auth, sdk => sdk.polls.create({
-            chatGuid, title: question, options,
-        }))
+        let created: any
+
+        try {
+            // Try to create poll in existing chat
+            created = await withSdk(auth, sdk => sdk.polls.create({
+                chatGuid, title: question, options,
+            }))
+        } catch (error: any) {
+            // If chat doesn't exist, create it first with a simple message, then retry
+            if (isChatNotExistError(error) && !to.startsWith("group:")) {
+                await withSdk(auth, sdk => sdk.chats.createChat({
+                    addresses: [to],
+                    message: "👋",
+                    service: service || "iMessage",
+                    method: "private-api",
+                }))
+
+                // Now create the poll
+                created = await withSdk(auth, sdk => sdk.polls.create({
+                    chatGuid, title: question, options,
+                }))
+            } else {
+                throw error
+            }
+        }
 
         // Server has waited for message creation; parse payloadData directly
         const parsed = parsePollDefinition(created)
-        
+
         if (parsed?.options?.length) {
             const responseOptions = parsed.options.map((o: any) => ({
                 id: o.optionIdentifier,
@@ -33,6 +63,7 @@ export function setupPollRoutes(app: any): void {
             to: t.String({ minLength: 1, maxLength: 256, description: "Who to send the poll to: phone, email, or group ID" }),
             question: t.Optional(t.String({ maxLength: 256, description: "The question you're asking" })),
             options: t.Array(t.String({ minLength: 1, maxLength: 128, description: "One answer option" }), { minItems: 2, maxItems: 10, description: "Possible answers (need at least 2)" }),
+            service: t.Optional(t.Union([t.Literal("iMessage"), t.Literal("SMS")], { description: "Force iMessage or SMS" })),
         }),
         response: t.Object({
             ok: t.Literal(true),
@@ -88,26 +119,26 @@ export function setupPollRoutes(app: any): void {
         try {
             const message: any = await withSdk(auth, sdk => sdk.messages.getMessage(params.id, { with: ['payloadData'] }))
             const parsed = parsePollDefinition(message)
-            
+
             if (parsed?.options?.length) {
                 const responseOptions = parsed.options.map((o: any) => ({
                     id: o.optionIdentifier,
                     text: o.text,
                 }))
-                return { 
-                    ok: true, 
-                    data: { 
-                        id: message.guid, 
-                        question: parsed.title, 
+                return {
+                    ok: true,
+                    data: {
+                        id: message.guid,
+                        question: parsed.title,
                         options: responseOptions,
                         creatorHandle: parsed.creatorHandle,
-                    } 
+                    }
                 }
             }
         } catch {
             // getMessage may fail (message not synced or doesn't exist)
         }
-        
+
         return { ok: false, error: { code: "POLL_NOT_FOUND", message: "Poll not found or unable to parse. Try using the poll ID returned from POST /polls instead." } }
     }), {
         params: t.Object({ id: t.String({ description: "Poll message GUID" }) }),
@@ -142,9 +173,9 @@ export function setupPollRoutes(app: any): void {
         return { ok: true }
     }), {
         params: t.Object({ id: t.String({ description: "Poll message GUID" }) }),
-        body: t.Object({ 
-            chat: t.String({ minLength: 1, maxLength: 256, description: "The conversation where the poll was sent" }), 
-            text: t.String({ minLength: 1, maxLength: 128, description: "The new answer option to add" }) 
+        body: t.Object({
+            chat: t.String({ minLength: 1, maxLength: 256, description: "The conversation where the poll was sent" }),
+            text: t.String({ minLength: 1, maxLength: 128, description: "The new answer option to add" })
         }),
         response: t.Object({ ok: t.Literal(true) }),
         detail: { tags: ["Polls"], summary: "Add poll option" },

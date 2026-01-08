@@ -5,6 +5,14 @@ import { t } from "elysia"
 import { createHandler, withSdk, toChatGuid, fromChatGuid } from "../core/auth"
 import { withTempFile } from "../core/upload"
 
+/**
+ * Check if error is due to chat not existing
+ */
+function isChatNotExistError(error: any): boolean {
+    return error?.message?.includes("Chat does not exist") ||
+        error?.response?.data?.error?.message?.includes("Chat does not exist")
+}
+
 export function setupMessageRoutes(app: any): void {
     // POST /send - Send message
     app.post("/send", createHandler(async (auth, { body }) => {
@@ -12,9 +20,29 @@ export function setupMessageRoutes(app: any): void {
         const chatGuid = toChatGuid(to, service)
         const effectId = effect ? `com.apple.messages.effect.CK${effect.charAt(0).toUpperCase() + effect.slice(1)}Effect` : undefined
 
-        const result: any = await withSdk(auth, sdk => sdk.messages.sendMessage({
-            chatGuid, message: text, subject, effectId, selectedMessageGuid: replyTo,
-        }))
+        let result: any
+
+        try {
+            // Try to send message to existing chat
+            result = await withSdk(auth, sdk => sdk.messages.sendMessage({
+                chatGuid, message: text, subject, effectId, selectedMessageGuid: replyTo,
+            }))
+        } catch (error: any) {
+            // If chat doesn't exist, create it with the first message
+            if (isChatNotExistError(error) && !to.startsWith("group:")) {
+                // For individual chats (not groups), create the chat with the message
+                // Note: effects, subjects, and replies are not supported when creating a new chat
+                result = await withSdk(auth, sdk => sdk.chats.createChat({
+                    addresses: [to],
+                    message: text,
+                    service: service || "iMessage",
+                    method: "private-api",
+                }))
+            } else {
+                // Re-throw if it's a different error or a group chat
+                throw error
+            }
+        }
 
         return { ok: true, data: { id: result.guid, to: fromChatGuid(chatGuid), text: result.text, sentAt: result.dateCreated } }
     }), {
@@ -58,11 +86,36 @@ export function setupMessageRoutes(app: any): void {
         const { to, file, audio, service } = body
         const chatGuid = toChatGuid(to, service)
 
-        const result: any = await withSdk(auth, sdk =>
-            withTempFile(file, path => sdk.attachments.sendAttachment({
-                chatGuid, filePath: path, isAudioMessage: audio === true || audio === "true",
-            }))
-        )
+        let result: any
+
+        try {
+            // Try to send file to existing chat
+            result = await withSdk(auth, sdk =>
+                withTempFile(file, path => sdk.attachments.sendAttachment({
+                    chatGuid, filePath: path, isAudioMessage: audio === true || audio === "true",
+                }))
+            )
+        } catch (error: any) {
+            // If chat doesn't exist, create it first with a simple message
+            if (isChatNotExistError(error) && !to.startsWith("group:")) {
+                // Create chat with a placeholder message first
+                await withSdk(auth, sdk => sdk.chats.createChat({
+                    addresses: [to],
+                    message: "📎",
+                    service: service || "iMessage",
+                    method: "private-api",
+                }))
+
+                // Now send the file
+                result = await withSdk(auth, sdk =>
+                    withTempFile(file, path => sdk.attachments.sendAttachment({
+                        chatGuid, filePath: path, isAudioMessage: audio === true || audio === "true",
+                    }))
+                )
+            } else {
+                throw error
+            }
+        }
 
         return {
             ok: true,
@@ -104,20 +157,49 @@ export function setupMessageRoutes(app: any): void {
         const { to, file, replyTo, stickerX, stickerY, stickerScale, stickerRotation, stickerWidth, service } = body
         const chatGuid = toChatGuid(to, service)
 
-        const result: any = await withSdk(auth, sdk =>
-            withTempFile(file, path => sdk.attachments.sendSticker({
-                chatGuid,
-                filePath: path,
-                ...(replyTo && {
-                    selectedMessageGuid: replyTo,
-                    stickerX: stickerX !== undefined ? Number(stickerX) : 0.5,
-                    stickerY: stickerY !== undefined ? Number(stickerY) : 0.5,
-                    stickerScale: stickerScale !== undefined ? Number(stickerScale) : 0.75,
-                    stickerRotation: stickerRotation !== undefined ? Number(stickerRotation) : 0,
-                    stickerWidth: stickerWidth !== undefined ? Number(stickerWidth) : 300,
-                }),
-            }))
-        )
+        let result: any
+        let chatWasCreated = false
+
+        try {
+            // Try to send sticker to existing chat
+            result = await withSdk(auth, sdk =>
+                withTempFile(file, path => sdk.attachments.sendSticker({
+                    chatGuid,
+                    filePath: path,
+                    ...(replyTo && {
+                        selectedMessageGuid: replyTo,
+                        stickerX: stickerX !== undefined ? Number(stickerX) : 0.5,
+                        stickerY: stickerY !== undefined ? Number(stickerY) : 0.5,
+                        stickerScale: stickerScale !== undefined ? Number(stickerScale) : 0.75,
+                        stickerRotation: stickerRotation !== undefined ? Number(stickerRotation) : 0,
+                        stickerWidth: stickerWidth !== undefined ? Number(stickerWidth) : 300,
+                    }),
+                }))
+            )
+        } catch (error: any) {
+            // If chat doesn't exist, create it first with a simple message
+            if (isChatNotExistError(error) && !to.startsWith("group:")) {
+                chatWasCreated = true
+                // Create chat with a placeholder message first
+                await withSdk(auth, sdk => sdk.chats.createChat({
+                    addresses: [to],
+                    message: "👋",
+                    service: service || "iMessage",
+                    method: "private-api",
+                }))
+
+                // Now send the sticker (note: replyTo won't work for first message)
+                result = await withSdk(auth, sdk =>
+                    withTempFile(file, path => sdk.attachments.sendSticker({
+                        chatGuid,
+                        filePath: path,
+                        // Skip replyTo for newly created chats as there's no message to reply to yet
+                    }))
+                )
+            } else {
+                throw error
+            }
+        }
 
         return {
             ok: true,
@@ -125,7 +207,7 @@ export function setupMessageRoutes(app: any): void {
                 id: result.guid,
                 to: fromChatGuid(chatGuid),
                 isSticker: true,
-                replyTo: replyTo || null,
+                replyTo: chatWasCreated ? null : (replyTo || null),
                 attachments: result.attachments?.map((a: any) => ({
                     id: a.guid,
                     name: a.transferName,
