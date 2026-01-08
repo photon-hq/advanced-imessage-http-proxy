@@ -77,7 +77,7 @@ export function setupMessageRoutes(app: any): void {
         detail: {
             tags: ["Messages"],
             summary: "Send a text message",
-            description: "Send a text message through the configured iMessage server. Supports screen effects, replies, and subject lines. Use 'service' to force SMS or iMessage (ignored for group chats).",
+            description: "Send a text message through the configured iMessage server. Supports screen effects, replies, and subject lines. Use 'service' to force SMS or iMessage (ignored for group chats). Note: When sending to a new user who has never been contacted, screen effects, subject lines, and reply features are not supported.",
         },
     })
 
@@ -148,7 +148,7 @@ export function setupMessageRoutes(app: any): void {
         detail: {
             tags: ["Attachments"],
             summary: "Send a file",
-            description: "Send photos, videos, documents, or any file. Set audio=true to send audio files as audio messages.",
+            description: "Send photos, videos, documents, or any file. Set audio=true to send audio files as audio messages. Note: When sending to a new user who has never been contacted, a placeholder message (📎) will be sent first to create the chat.",
         },
     })
 
@@ -248,7 +248,7 @@ export function setupMessageRoutes(app: any): void {
         detail: {
             tags: ["Attachments"],
             summary: "Send a sticker",
-            description: "Send a sticker image. If replyTo is set, the sticker is associated with the target message.",
+            description: "Send a sticker image. If replyTo is set, the sticker is associated with the target message. Note: When sending to a new user who has never been contacted, a placeholder message (👋) will be sent first to create the chat, and replyTo will be ignored.",
         },
     })
 

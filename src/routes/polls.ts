@@ -76,7 +76,7 @@ export function setupPollRoutes(app: any): void {
         detail: {
             tags: ["Polls"],
             summary: "Create a poll",
-            description: "Send an iMessage poll. Recipients can vote directly in their Messages app.",
+            description: "Send an iMessage poll. Recipients can vote directly in their Messages app. Note: When sending to a new user who has never been contacted, a placeholder message (👋) will be sent first to create the chat.",
         },
     })
 
