@@ -9,6 +9,7 @@ interface SDKEntry {
     refCount: number
     lastUsed: number
     connected: boolean
+    connectPromise?: Promise<void>
 }
 
 interface PoolStats {
@@ -69,6 +70,7 @@ class SDKPool {
                 lastUsed: Date.now(),
                 connected: false,
             })
+            this.attachLifecycleListeners(key, sdk)
             return sdk
         } finally {
             this.pending.delete(key)
@@ -94,9 +96,51 @@ class SDKPool {
         const entry = this.instances.get(key)
 
         if (!entry || entry.connected) return
+        if (entry.connectPromise) {
+            await entry.connectPromise
+            return
+        }
 
-        await entry.sdk.connect()
-        entry.connected = true
+        const connectPromise = new Promise<void>((resolve, reject) => {
+            const cleanup = () => {
+                entry.sdk.off("ready", handleReady)
+                entry.sdk.off("error", handleError)
+            }
+
+            const handleReady = () => {
+                const current = this.instances.get(key)
+                if (current?.sdk === entry.sdk) {
+                    current.connected = true
+                }
+                cleanup()
+                resolve()
+            }
+
+            const handleError = (error: unknown) => {
+                const current = this.instances.get(key)
+                if (current?.sdk === entry.sdk) {
+                    current.connected = false
+                }
+                cleanup()
+                reject(error)
+            }
+
+            entry.sdk.once("ready", handleReady)
+            entry.sdk.once("error", handleError)
+
+            Promise.resolve(entry.sdk.connect()).catch(handleError)
+        })
+
+        entry.connectPromise = connectPromise
+
+        try {
+            await connectPromise
+        } finally {
+            const current = this.instances.get(key)
+            if (current?.connectPromise === connectPromise) {
+                current.connectPromise = undefined
+            }
+        }
     }
 
     getStats(): PoolStats {
@@ -127,6 +171,33 @@ class SDKPool {
 
     private async createSDK(serverUrl: string, apiKey: string): Promise<AdvancedIMessageKit> {
         return new AdvancedIMessageKit({ serverUrl, apiKey })
+    }
+
+    private attachLifecycleListeners(key: string, sdk: AdvancedIMessageKit): void {
+        sdk.on("ready", () => {
+            const entry = this.instances.get(key)
+            if (entry?.sdk === sdk) {
+                entry.connected = true
+            }
+        })
+
+        sdk.on("disconnect", () => {
+            const entry = this.instances.get(key)
+            if (entry?.sdk === sdk) {
+                entry.connected = false
+            }
+        })
+
+        sdk.on("error", (error: unknown) => {
+            const entry = this.instances.get(key)
+            if (entry?.sdk === sdk) {
+                entry.connected = false
+                entry.connectPromise = undefined
+            }
+
+            const message = error instanceof Error ? error.message : String(error)
+            console.error(`[SDKPool] Upstream SDK error: ${message}`)
+        })
     }
 
     private incrementRef(key: string): void {
