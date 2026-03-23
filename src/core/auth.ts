@@ -45,7 +45,9 @@ export function fromChatGuid(guid: string): string {
 export async function withSdk<T>(auth: Auth, handler: (sdk: AdvancedIMessageKit) => Promise<T>): Promise<T> {
     const sdk = await sdkPool.acquire(auth.serverUrl, auth.apiKey)
     try {
-        await sdkPool.ensureConnected(auth.serverUrl, auth.apiKey)
+        // Most SDK modules use upstream HTTP APIs directly, so avoid opening a
+        // websocket connection for every authenticated request. Real-time event
+        // bridging handles socket connectivity separately in `socket-server.ts`.
         return await handler(sdk)
     } finally {
         sdkPool.release(auth.serverUrl, auth.apiKey)
