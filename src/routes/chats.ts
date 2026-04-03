@@ -74,12 +74,15 @@ export function setupChatRoutes(app: any): void {
     })
 
     // GET /chats/:id/participants - Get chat participants
-    app.get("/chats/:id/participants", createHandler(async (auth, { params }) => {
+    app.get("/chats/:id/participants", createHandler(async (auth, { params, set }) => {
         const chatGuid = toChatGuid(params.id)
         const chats = await withSdk(auth, sdk => sdk.chats.getChats())
         const chat = chats.find(c => c.guid === chatGuid)
 
-        if (!chat) throw new Error(`Chat not found: ${chatGuid}`)
+        if (!chat) {
+            set.status = 404
+            return { ok: false, error: { code: "CHAT_NOT_FOUND", message: `No chat found with identifier '${params.id}'` } }
+        }
 
         return {
             ok: true,
@@ -97,15 +100,19 @@ export function setupChatRoutes(app: any): void {
             id: t.String({ description: "Chat identifier (phone, email, or group:xxx)" }),
         }),
         response: t.Object({
-            ok: t.Literal(true),
-            data: t.Object({
+            ok: t.Boolean(),
+            data: t.Optional(t.Object({
                 chatId: t.String(),
                 chatName: t.Nullable(t.String()),
                 participants: t.Array(t.Object({
                     address: t.String(),
                     service: t.String(),
                 })),
-            }),
+            })),
+            error: t.Optional(t.Object({
+                code: t.String(),
+                message: t.String(),
+            })),
         }),
         detail: {
             tags: ["Chats"],
