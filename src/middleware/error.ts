@@ -111,9 +111,9 @@ export function mapError(error: unknown): ApiError {
 
     const axiosErr = error as any
     if (axiosErr?.isAxiosError || axiosErr?.response?.status) {
-        const errCode: string | undefined = axiosErr.code
+        const connType = classifyConnectionError(error)
 
-        if (errCode && UNREACHABLE_CODES.has(errCode)) {
+        if (connType === "unreachable") {
             return {
                 status: 502,
                 ok: false,
@@ -128,7 +128,7 @@ export function mapError(error: unknown): ApiError {
             }
         }
 
-        if (errCode && TIMEOUT_CODES.has(errCode)) {
+        if (connType === "timeout") {
             return {
                 status: 504,
                 ok: false,

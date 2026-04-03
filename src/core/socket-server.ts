@@ -137,13 +137,19 @@ io.on("connection", async (socket) => {
         const message = error instanceof Error ? error.message : String(error)
         const connType = classifyConnectionError(error)
         socket.emit("error", {
-            code: connType ? "UPSTREAM_UNREACHABLE" : "INTERNAL_ERROR",
+            code: connType === "timeout"
+                ? "UPSTREAM_TIMEOUT"
+                : connType === "unreachable"
+                    ? "UPSTREAM_UNREACHABLE"
+                    : "INTERNAL_ERROR",
             message,
             category: connType ? "upstream_unreachable" : "internal",
             retryable: !!connType,
-            suggested_action: connType
-                ? "The iMessage server is not responding. Verify it is running and the URL is correct. Retry connection in 60 seconds."
-                : "An unexpected error occurred during connection setup. Retry once. If this persists, check server configuration.",
+            suggested_action: connType === "timeout"
+                ? "The iMessage server did not respond in time. Retry connection in 30 seconds."
+                : connType === "unreachable"
+                    ? "The iMessage server is not responding. Verify it is running and the URL is correct. Retry connection in 60 seconds."
+                    : "An unexpected error occurred during connection setup. Retry once. If this persists, check server configuration.",
         })
         socket.disconnect()
     }

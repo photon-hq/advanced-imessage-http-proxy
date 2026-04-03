@@ -85,27 +85,35 @@ export function setupPollRoutes(app: any): void {
 
     // GET /polls/:id - Get poll details
     app.get("/polls/:id", createHandler(async (auth, { params, set, requestId }) => {
+        let message: any
         try {
-            const message: any = await withSdk(auth, sdk => sdk.messages.getMessage(params.id, { with: ['payloadData'] }))
-            const parsed = parsePollDefinition(message)
-            
-            if (parsed?.options?.length) {
-                const responseOptions = parsed.options.map((o: any) => ({
-                    id: o.optionIdentifier,
-                    text: o.text,
-                }))
-                return { 
-                    ok: true, 
-                    data: { 
-                        id: message.guid, 
-                        question: parsed.title, 
-                        options: responseOptions,
-                        creatorHandle: parsed.creatorHandle,
-                    } 
+            message = await withSdk(auth, sdk => sdk.messages.getMessage(params.id, { with: ['payloadData'] }))
+        } catch (error: any) {
+            if (error?.response?.status !== 404) throw error
+        }
+
+        if (message) {
+            try {
+                const parsed = parsePollDefinition(message)
+
+                if (parsed?.options?.length) {
+                    const responseOptions = parsed.options.map((o: any) => ({
+                        id: o.optionIdentifier,
+                        text: o.text,
+                    }))
+                    return {
+                        ok: true,
+                        data: {
+                            id: message.guid,
+                            question: parsed.title,
+                            options: responseOptions,
+                            creatorHandle: parsed.creatorHandle,
+                        }
+                    }
                 }
+            } catch {
+                // parsePollDefinition failed — not a poll message, fall through to 404
             }
-        } catch {
-            // getMessage may fail (message not synced or doesn't exist)
         }
         
         set.status = 404
