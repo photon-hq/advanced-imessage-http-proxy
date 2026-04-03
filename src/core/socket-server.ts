@@ -3,6 +3,7 @@ import { Server, Socket } from "socket.io"
 
 import { sdkPool } from "./sdk-pool"
 import { parseAuth } from "./auth"
+import { classifyConnectionError } from "../middleware/error"
 
 const EVENTS = [
     "new-message",
@@ -134,13 +135,13 @@ io.on("connection", async (socket) => {
             sdkPool.release(creds.serverUrl, creds.apiKey)
         }
         const message = error instanceof Error ? error.message : String(error)
-        const isConnectionError = message.includes("ECONNREFUSED") || message.includes("ENOTFOUND") || message.includes("ETIMEDOUT")
+        const connType = classifyConnectionError(error)
         socket.emit("error", {
-            code: isConnectionError ? "UPSTREAM_UNREACHABLE" : "INTERNAL_ERROR",
+            code: connType ? "UPSTREAM_UNREACHABLE" : "INTERNAL_ERROR",
             message,
-            category: isConnectionError ? "upstream_unreachable" : "internal",
-            retryable: isConnectionError,
-            suggested_action: isConnectionError
+            category: connType ? "upstream_unreachable" : "internal",
+            retryable: !!connType,
+            suggested_action: connType
                 ? "The iMessage server is not responding. Verify it is running and the URL is correct. Retry connection in 60 seconds."
                 : "An unexpected error occurred during connection setup. Retry once. If this persists, check server configuration.",
         })

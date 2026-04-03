@@ -122,6 +122,10 @@ export function setupChatRoutes(app: any): void {
             error: t.Optional(t.Object({
                 code: t.String(),
                 message: t.String(),
+                category: t.Optional(t.String()),
+                retryable: t.Optional(t.Boolean()),
+                suggested_action: t.Optional(t.String()),
+                request_id: t.Optional(t.String()),
             })),
         }),
         detail: {

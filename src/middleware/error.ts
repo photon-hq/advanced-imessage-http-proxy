@@ -51,15 +51,25 @@ const SUGGESTED_ACTIONS: Record<string, string> = {
 }
 
 function getSuggestedAction(code: string, fallback?: string): string {
-    return fallback || SUGGESTED_ACTIONS[code] || SUGGESTED_ACTIONS.UNKNOWN_ERROR
+    return fallback || SUGGESTED_ACTIONS[code] || SUGGESTED_ACTIONS.UNKNOWN_ERROR!
 }
 
 // ------------------------------------------------------------------------------
 // Connection Error Codes (no HTTP response received)
 // ------------------------------------------------------------------------------
 
-const UNREACHABLE_CODES = new Set(["ECONNREFUSED", "ENOTFOUND", "ECONNRESET", "EHOSTUNREACH", "ENETUNREACH"])
-const TIMEOUT_CODES = new Set(["ETIMEDOUT", "ECONNABORTED", "ERR_CANCELED"])
+export const UNREACHABLE_CODES = new Set(["ECONNREFUSED", "ENOTFOUND", "ECONNRESET", "EHOSTUNREACH", "ENETUNREACH"])
+export const TIMEOUT_CODES = new Set(["ETIMEDOUT", "ECONNABORTED", "ERR_CANCELED"])
+
+export function classifyConnectionError(error: unknown): "unreachable" | "timeout" | null {
+    const errCode = (error as any)?.code as string | undefined
+    if (errCode && UNREACHABLE_CODES.has(errCode)) return "unreachable"
+    if (errCode && TIMEOUT_CODES.has(errCode)) return "timeout"
+    const msg = error instanceof Error ? error.message : String(error)
+    for (const code of UNREACHABLE_CODES) if (msg.includes(code)) return "unreachable"
+    for (const code of TIMEOUT_CODES) if (msg.includes(code)) return "timeout"
+    return null
+}
 
 // ------------------------------------------------------------------------------
 // Error Mapper
