@@ -216,7 +216,7 @@ export function mapError(error: unknown): ApiError {
             ok: false,
             error: {
                 code: "UPSTREAM_ERROR",
-                message: upstreamMessage,
+                message: upstreamMessage || "The iMessage server returned an error",
                 category: "upstream",
                 retryable: false,
                 suggested_action: getSuggestedAction("UPSTREAM_ERROR"),
