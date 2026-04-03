@@ -84,31 +84,50 @@ export function setupPollRoutes(app: any): void {
     })
 
     // GET /polls/:id - Get poll details
-    app.get("/polls/:id", createHandler(async (auth, { params }) => {
+    app.get("/polls/:id", createHandler(async (auth, { params, set, requestId }) => {
+        let message: any
         try {
-            const message: any = await withSdk(auth, sdk => sdk.messages.getMessage(params.id, { with: ['payloadData'] }))
-            const parsed = parsePollDefinition(message)
-            
-            if (parsed?.options?.length) {
-                const responseOptions = parsed.options.map((o: any) => ({
-                    id: o.optionIdentifier,
-                    text: o.text,
-                }))
-                return { 
-                    ok: true, 
-                    data: { 
-                        id: message.guid, 
-                        question: parsed.title, 
-                        options: responseOptions,
-                        creatorHandle: parsed.creatorHandle,
-                    } 
+            message = await withSdk(auth, sdk => sdk.messages.getMessage(params.id, { with: ['payloadData'] }))
+        } catch (error: any) {
+            if (error?.response?.status !== 404) throw error
+        }
+
+        if (message) {
+            try {
+                const parsed = parsePollDefinition(message)
+
+                if (parsed?.options?.length) {
+                    const responseOptions = parsed.options.map((o: any) => ({
+                        id: o.optionIdentifier,
+                        text: o.text,
+                    }))
+                    return {
+                        ok: true,
+                        data: {
+                            id: message.guid,
+                            question: parsed.title,
+                            options: responseOptions,
+                            creatorHandle: parsed.creatorHandle,
+                        }
+                    }
                 }
+            } catch {
+                // parsePollDefinition failed — not a poll message, fall through to 404
             }
-        } catch {
-            // getMessage may fail (message not synced or doesn't exist)
         }
         
-        return { ok: false, error: { code: "POLL_NOT_FOUND", message: "Poll not found or unable to parse. Try using the poll ID returned from POST /polls instead." } }
+        set.status = 404
+        return {
+            ok: false,
+            error: {
+                code: "POLL_NOT_FOUND",
+                message: "Poll not found or unable to parse",
+                category: "not_found",
+                retryable: false,
+                suggested_action: "Poll not found. Use the poll GUID returned from POST /polls.",
+                request_id: requestId,
+            },
+        }
     }), {
         params: t.Object({ id: t.String({ description: "Poll message GUID" }) }),
         response: t.Object({
@@ -122,6 +141,10 @@ export function setupPollRoutes(app: any): void {
             error: t.Optional(t.Object({
                 code: t.String(),
                 message: t.String(),
+                category: t.Optional(t.String()),
+                retryable: t.Optional(t.Boolean()),
+                suggested_action: t.Optional(t.String()),
+                request_id: t.Optional(t.String()),
             })),
         }),
         detail: {

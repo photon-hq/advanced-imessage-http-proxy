@@ -212,9 +212,8 @@ export function setupMessageRoutes(app: any): void {
     })
 
     // GET /messages/search - Search messages
-    app.get("/messages/search", createHandler(async (auth, { query, set }) => {
+    app.get("/messages/search", createHandler(async (auth, { query }) => {
         const { q, limit = 20 } = query
-        if (!q) { set.status = 400; return { ok: false, error: { code: "BAD_REQUEST", message: "q required" } } }
 
         try {
             const messages: any = await withSdk(auth, sdk => sdk.messages.searchMessages({ query: q, limit: Number(limit) }))

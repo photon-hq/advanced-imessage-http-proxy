@@ -57,19 +57,29 @@ export async function withSdk<T>(auth: Auth, handler: (sdk: AdvancedIMessageKit)
 /** Create route handler with auth */
 export function createHandler(handler: (auth: Auth, ctx: any) => Promise<any>) {
     return async (ctx: any) => {
+        const requestId: string = ctx.requestId || "unknown"
         const auth = parseAuth(ctx.headers.authorization)
         if (!auth) {
             ctx.set.status = 401
-            return { ok: false, error: { code: "UNAUTHORIZED", message: "Invalid Authorization header" } }
+            return {
+                ok: false,
+                error: {
+                    code: "UNAUTHORIZED",
+                    message: "Missing or invalid Authorization header",
+                    category: "auth",
+                    retryable: false,
+                    suggested_action: "Token must be base64-encoded 'serverUrl|apiKey'. Example: echo -n 'https://your-server|your-key' | base64",
+                    request_id: requestId,
+                },
+            }
         }
-        // Ensure query exists
         ctx.query = ctx.query || {}
         try {
             return await handler(auth, ctx)
         } catch (error) {
             const mapped = mapError(error)
             ctx.set.status = mapped.status
-            return { ok: false, error: mapped.error }
+            return { ok: false, error: { ...mapped.error, request_id: requestId } }
         }
     }
 }
