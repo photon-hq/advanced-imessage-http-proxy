@@ -84,7 +84,7 @@ export function setupPollRoutes(app: any): void {
     })
 
     // GET /polls/:id - Get poll details
-    app.get("/polls/:id", createHandler(async (auth, { params }) => {
+    app.get("/polls/:id", createHandler(async (auth, { params, set, requestId }) => {
         try {
             const message: any = await withSdk(auth, sdk => sdk.messages.getMessage(params.id, { with: ['payloadData'] }))
             const parsed = parsePollDefinition(message)
@@ -108,7 +108,18 @@ export function setupPollRoutes(app: any): void {
             // getMessage may fail (message not synced or doesn't exist)
         }
         
-        return { ok: false, error: { code: "POLL_NOT_FOUND", message: "Poll not found or unable to parse. Try using the poll ID returned from POST /polls instead." } }
+        set.status = 404
+        return {
+            ok: false,
+            error: {
+                code: "POLL_NOT_FOUND",
+                message: "Poll not found or unable to parse",
+                category: "not_found",
+                retryable: false,
+                suggested_action: "Poll not found. Use the poll GUID returned from POST /polls.",
+                request_id: requestId,
+            },
+        }
     }), {
         params: t.Object({ id: t.String({ description: "Poll message GUID" }) }),
         response: t.Object({
