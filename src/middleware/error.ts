@@ -23,6 +23,7 @@ export interface ApiError {
         category: ErrorCategory
         retryable: boolean
         suggested_action: string
+        request_id?: string
         detail?: unknown
         retry_after?: number
     }
@@ -59,7 +60,7 @@ function getSuggestedAction(code: string, fallback?: string): string {
 // ------------------------------------------------------------------------------
 
 export const UNREACHABLE_CODES = new Set(["ECONNREFUSED", "ENOTFOUND", "ECONNRESET", "EHOSTUNREACH", "ENETUNREACH"])
-export const TIMEOUT_CODES = new Set(["ETIMEDOUT", "ECONNABORTED", "ERR_CANCELED"])
+export const TIMEOUT_CODES = new Set(["ETIMEDOUT", "ECONNABORTED"])
 
 export function classifyConnectionError(error: unknown): "unreachable" | "timeout" | null {
     const errCode = (error as any)?.code as string | undefined
@@ -135,7 +136,7 @@ export function mapError(error: unknown): ApiError {
                 error: {
                     code: "UPSTREAM_TIMEOUT",
                     message: `iMessage server request timed out: ${axiosErr.message}`,
-                    category: "upstream_unreachable",
+                    category: "upstream",
                     retryable: true,
                     suggested_action: getSuggestedAction("UPSTREAM_TIMEOUT"),
                     retry_after: 30,
@@ -157,7 +158,14 @@ export function mapError(error: unknown): ApiError {
         const upstreamMessage = responseData?.error?.message ?? responseData?.message ?? axiosErr.message
 
         if (upstreamStatus === 429) {
-            const retryAfter = Number(axiosErr.response?.headers?.["retry-after"]) || 30
+            const rawRetryAfter = axiosErr.response?.headers?.["retry-after"]
+            const retryAfterSeconds = Number(rawRetryAfter)
+            const retryAfterDate = Date.parse(String(rawRetryAfter))
+            const retryAfter = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+                ? retryAfterSeconds
+                : Number.isFinite(retryAfterDate)
+                    ? Math.max(0, Math.ceil((retryAfterDate - Date.now()) / 1000))
+                    : 30
             return {
                 status: 429,
                 ok: false,
