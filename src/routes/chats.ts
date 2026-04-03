@@ -74,7 +74,7 @@ export function setupChatRoutes(app: any): void {
     })
 
     // GET /chats/:id/participants - Get chat participants
-    app.get("/chats/:id/participants", createHandler(async (auth, { params, set }) => {
+    app.get("/chats/:id/participants", createHandler(async (auth, { params, set, requestId }) => {
         const chatGuid = toChatGuid(params.id)
         const chats = await withSdk(auth, sdk => sdk.chats.getChats())
         const chat = chats.find(c => c.guid === chatGuid)
@@ -89,6 +89,7 @@ export function setupChatRoutes(app: any): void {
                     category: "not_found",
                     retryable: false,
                     suggested_action: "No chat exists with this identifier. To start a new conversation, send a message first — the chat is created automatically.",
+                    request_id: requestId,
                 },
             }
         }

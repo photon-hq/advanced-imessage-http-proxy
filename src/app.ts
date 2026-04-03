@@ -1,8 +1,13 @@
+import { randomUUID } from "node:crypto"
 import { Elysia } from "elysia"
 import { swagger } from "@elysiajs/swagger"
 
 import { setupRoutes } from "./routes"
 import { mapError } from "./middleware/error"
+
+function generateRequestId(): string {
+    return `req_${randomUUID().replace(/-/g, "").slice(0, 12)}`
+}
 
 const OPENAPI_DESCRIPTION = [
     "A lightweight HTTP proxy for iMessage, built on top of Advanced iMessage Kit.",
@@ -80,10 +85,17 @@ export function createApp() {
             },
             exclude: ["/swagger", "/swagger/json"],
         }))
-        .onError(({ error, set }) => {
+        .derive(() => {
+            return { requestId: generateRequestId() }
+        })
+        .onAfterHandle(({ requestId, set }) => {
+            set.headers["x-request-id"] = requestId
+        })
+        .onError(({ error, set, requestId }) => {
+            set.headers["x-request-id"] = requestId
             const mapped = mapError(error)
             set.status = mapped.status
-            return { ok: false, error: mapped.error }
+            return { ok: false, error: { ...mapped.error, request_id: requestId } }
         })
 
     setupRoutes(app)

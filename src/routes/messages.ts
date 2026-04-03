@@ -212,7 +212,7 @@ export function setupMessageRoutes(app: any): void {
     })
 
     // GET /messages/search - Search messages
-    app.get("/messages/search", createHandler(async (auth, { query, set }) => {
+    app.get("/messages/search", createHandler(async (auth, { query, set, requestId }) => {
         const { q, limit = 20 } = query
         if (!q) {
             set.status = 400
@@ -224,6 +224,7 @@ export function setupMessageRoutes(app: any): void {
                     category: "validation",
                     retryable: false,
                     suggested_action: "Provide a non-empty 'q' query parameter with the search term.",
+                    request_id: requestId,
                 },
             }
         }

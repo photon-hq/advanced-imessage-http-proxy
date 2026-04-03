@@ -84,7 +84,7 @@ export function setupPollRoutes(app: any): void {
     })
 
     // GET /polls/:id - Get poll details
-    app.get("/polls/:id", createHandler(async (auth, { params, set }) => {
+    app.get("/polls/:id", createHandler(async (auth, { params, set, requestId }) => {
         try {
             const message: any = await withSdk(auth, sdk => sdk.messages.getMessage(params.id, { with: ['payloadData'] }))
             const parsed = parsePollDefinition(message)
@@ -117,6 +117,7 @@ export function setupPollRoutes(app: any): void {
                 category: "not_found",
                 retryable: false,
                 suggested_action: "Poll not found. Use the poll GUID returned from POST /polls.",
+                request_id: requestId,
             },
         }
     }), {
