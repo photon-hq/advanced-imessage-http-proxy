@@ -40,7 +40,13 @@ io.on("connection", async (socket) => {
     const token = socket.handshake.auth?.token as string | undefined
 
     if (!token) {
-        socket.emit("error", { message: "Missing authentication token" })
+        socket.emit("error", {
+            code: "UNAUTHORIZED",
+            message: "Missing authentication token",
+            category: "auth",
+            retryable: false,
+            suggested_action: "Provide auth.token when connecting. Token is base64-encoded 'serverUrl|apiKey'.",
+        })
         socket.disconnect()
         return
     }
@@ -48,7 +54,13 @@ io.on("connection", async (socket) => {
     const auth = parseAuth(`Bearer ${token}`)
 
     if (!auth) {
-        socket.emit("error", { message: "Invalid authentication token" })
+        socket.emit("error", {
+            code: "UNAUTHORIZED",
+            message: "Invalid authentication token",
+            category: "auth",
+            retryable: false,
+            suggested_action: "Token must be base64-encoded 'serverUrl|apiKey'. Example: echo -n 'https://your-server|your-key' | base64",
+        })
         socket.disconnect()
         return
     }
@@ -121,7 +133,17 @@ io.on("connection", async (socket) => {
         if (creds && socketCredentials.delete(socket.id)) {
             sdkPool.release(creds.serverUrl, creds.apiKey)
         }
-        socket.emit("error", { message: String(error) })
+        const message = error instanceof Error ? error.message : String(error)
+        const isConnectionError = message.includes("ECONNREFUSED") || message.includes("ENOTFOUND") || message.includes("ETIMEDOUT")
+        socket.emit("error", {
+            code: isConnectionError ? "UPSTREAM_UNREACHABLE" : "INTERNAL_ERROR",
+            message,
+            category: isConnectionError ? "upstream_unreachable" : "internal",
+            retryable: isConnectionError,
+            suggested_action: isConnectionError
+                ? "The iMessage server is not responding. Verify it is running and the URL is correct. Retry connection in 60 seconds."
+                : "An unexpected error occurred during connection setup. Retry once. If this persists, check server configuration.",
+        })
         socket.disconnect()
     }
 })
