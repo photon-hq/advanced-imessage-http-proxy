@@ -109,7 +109,16 @@ export function setupPollRoutes(app: any): void {
         }
         
         set.status = 404
-        return { ok: false, error: { code: "POLL_NOT_FOUND", message: "Poll not found or unable to parse. Try using the poll ID returned from POST /polls instead." } }
+        return {
+            ok: false,
+            error: {
+                code: "POLL_NOT_FOUND",
+                message: "Poll not found or unable to parse",
+                category: "not_found",
+                retryable: false,
+                suggested_action: "Poll not found. Use the poll GUID returned from POST /polls.",
+            },
+        }
     }), {
         params: t.Object({ id: t.String({ description: "Poll message GUID" }) }),
         response: t.Object({

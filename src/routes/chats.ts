@@ -81,7 +81,16 @@ export function setupChatRoutes(app: any): void {
 
         if (!chat) {
             set.status = 404
-            return { ok: false, error: { code: "CHAT_NOT_FOUND", message: `No chat found with identifier '${params.id}'` } }
+            return {
+                ok: false,
+                error: {
+                    code: "CHAT_NOT_FOUND",
+                    message: `No chat found with identifier '${params.id}'`,
+                    category: "not_found",
+                    retryable: false,
+                    suggested_action: "No chat exists with this identifier. To start a new conversation, send a message first — the chat is created automatically.",
+                },
+            }
         }
 
         return {
