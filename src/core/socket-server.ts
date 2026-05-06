@@ -3,6 +3,13 @@ import { Server, Socket } from "socket.io"
 
 import { sdkPool } from "./sdk-pool"
 import { parseAuth } from "./auth"
+import { normalizeLocation } from "./findmy"
+
+// Per-event payload transforms — keeps the realtime stream consistent with the
+// REST contract (camelCase, named coordinates, etc.).
+const TRANSFORMS: Partial<Record<string, (data: unknown) => unknown>> = {
+    "new-findmy-location": (data) => normalizeLocation(data as any),
+}
 
 const EVENTS = [
     "new-message",
@@ -20,6 +27,7 @@ const EVENTS = [
     "new-server",
     "incoming-facetime",
     "ft-call-status-changed",
+    "new-findmy-location", // Real-time Find My Friends location update (auto-refreshes every 30s)
     "hello-world", // SDK connection test event
 ] as const
 
@@ -91,11 +99,12 @@ io.on("connection", async (socket) => {
                 activeSockets.set(key, new Set())
 
                 const listeners = EVENTS.map(event => {
+                    const transform = TRANSFORMS[event]
                     const handler = (data: unknown) => {
                         const sockets = activeSockets.get(key)
-                        if (sockets) {
-                            for (const s of sockets) s.emit(event, data)
-                        }
+                        if (!sockets) return
+                        const payload = transform ? transform(data) : data
+                        for (const s of sockets) s.emit(event, payload)
                     }
                     sdk.on(event as any, handler)
                     return { event, handler }

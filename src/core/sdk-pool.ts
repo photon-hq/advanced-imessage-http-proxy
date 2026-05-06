@@ -170,7 +170,13 @@ class SDKPool {
     // ------------------------------------------------------------------------
 
     private async createSDK(serverUrl: string, apiKey: string): Promise<AdvancedIMessageKit> {
-        return new AdvancedIMessageKit({ serverUrl, apiKey })
+        const sdk = new AdvancedIMessageKit({ serverUrl, apiKey })
+        // The SDK auto-connects its socket in the constructor. The proxy wants a
+        // lazier contract: plain HTTP routes should stay HTTP-only, and the
+        // realtime bridge should start from a clean explicit `connect()` call so
+        // the SDK's own socket listeners cannot miss the initial auth handshake.
+        sdk.socket.disconnect()
+        return sdk
     }
 
     private attachLifecycleListeners(key: string, sdk: AdvancedIMessageKit): void {

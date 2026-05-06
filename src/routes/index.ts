@@ -8,6 +8,7 @@ import { setupGroupRoutes } from "./groups"
 import { setupAttachmentRoutes } from "./attachments"
 import { setupPollRoutes } from "./polls"
 import { setupServerRoutes } from "./server"
+import { setupFindMyRoutes } from "./findmy"
 
 export function setupRoutes(app: any): void {
     setupMessageRoutes(app)
@@ -16,6 +17,7 @@ export function setupRoutes(app: any): void {
     setupAttachmentRoutes(app)
     setupPollRoutes(app)
     setupServerRoutes(app)
+    setupFindMyRoutes(app)
 
     // Root - Redirect to GitHub
     app.get("/", ({ set }: { set: any }) => {

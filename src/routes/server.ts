@@ -83,15 +83,5 @@ export function setupServerRoutes(app: any): void {
         detail: { tags: ["Server"], summary: "List handles" },
     })
 
-    // GET /icloud/friends - Get Find My Friends locations
-    app.get("/icloud/friends", createHandler(async (auth) => {
-        const friends: any = await withSdk(auth, sdk => sdk.icloud.getFindMyFriends())
-        return { ok: true, data: friends }
-    }), {
-        response: t.Object({
-            ok: t.Literal(true),
-            data: t.Any(),
-        }),
-        detail: { tags: ["Server"], summary: "Get Find My Friends" },
-    })
+    // Find My Friends routes live in `routes/findmy.ts` (own tag, full schema).
 }
