@@ -103,7 +103,18 @@ io.on("connection", async (socket) => {
                     const handler = (data: unknown) => {
                         const sockets = activeSockets.get(key)
                         if (!sockets) return
-                        const payload = transform ? transform(data) : data
+                        let payload: unknown = data
+                        if (transform) {
+                            try {
+                                payload = transform(data)
+                            } catch (err) {
+                                // Drop the event rather than emit the raw upstream shape:
+                                // shipping un-normalized data would violate the camelCase
+                                // contract that REST/Socket.IO subscribers rely on.
+                                console.error(`[socket] transform failed for '${event}':`, err)
+                                return
+                            }
+                        }
                         for (const s of sockets) s.emit(event, payload)
                     }
                     sdk.on(event as any, handler)

@@ -67,7 +67,10 @@ async function pollOnce(): Promise<void> {
         const seen = new Set<string>()
 
         for (const loc of data) {
-            const key = loc.handle ?? ""
+            // Skip locations without a handle — we can't track anonymous shares
+            // and a shared empty-string key would collide across them.
+            if (!loc.handle) continue
+            const key = loc.handle
             seen.add(key)
             const prev = snapshot.get(key)
             if (!prev) {
@@ -100,7 +103,8 @@ socket.on("ready", () => {
 })
 
 socket.on("new-findmy-location", (loc: FindMyLocation) => {
-    const key = loc.handle ?? ""
+    if (!loc.handle) return // see pollOnce() — anonymous shares can't be tracked
+    const key = loc.handle
     const prev = snapshot.get(key)
     snapshot.set(key, loc)
     const tag = !prev ? "+start" : sigOf(prev) === sigOf(loc) ? "noop  " : "update"
