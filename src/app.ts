@@ -64,6 +64,7 @@ export function createApp() {
                     { name: "Groups", description: "Create and manage group chats" },
                     { name: "Polls", description: "Create and interact with polls" },
                     { name: "Attachments", description: "Send and retrieve attachments" },
+                    { name: "Find My", description: "Read Find My friend-sharing location data" },
                     { name: "Server", description: "Server info and utilities" },
                 ],
                 components: {

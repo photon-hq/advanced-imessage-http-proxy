@@ -42,9 +42,13 @@ Advanced iMessage HTTP Proxy is a RESTful API that proxies requests to Advanced 
 | [Get Handles](#get-handles) | List contact handles | `GET /handles` | [contact-list.sh](./examples/contact-list.sh) |
 | [Share Contact Card](#share-contact-card) | Share your info | `POST /chats/:id/contact/share` | [contact-share.sh](./examples/contact-share.sh) |
 | [Contact Share Status](#contact-share-status) | Check if sharing recommended | `GET /chats/:id/contact/status` | [contact-share.sh](./examples/contact-share.sh) |
+| [Find My Friends](#find-my-friends) | List friends sharing location | `GET /icloud/friends` | [findmy-friends.sh](./examples/findmy-friends.sh) |
+| [Get Friend Location](#get-friend-location) | One friend's current location | `GET /icloud/friends/:handle` | [findmy-friends.sh](./examples/findmy-friends.sh) |
+| [Sharing Status](#sharing-status) | Is a handle sharing? | `GET /icloud/friends/:handle/sharing` | [findmy-friends.sh](./examples/findmy-friends.sh) |
 | [Server Info](#server-info) | Get server details | `GET /server` | [server-info.sh](./examples/server-info.sh) |
 | [Health Check](#health-check) | Basic health check | `GET /health` | [health-check.sh](./examples/health-check.sh) |
 | [Real-time Events](#real-time-events-socketio) | Socket.IO event subscription | Socket.IO | [auto-reply-bot.ts](./examples/auto-reply-bot.ts) |
+| [Live Location Updates](#live-location-updates) | Real-time Find My pushes | Socket.IO `new-findmy-location` | [findmy-watch.ts](./examples/findmy-watch.ts) |
 
 ---
 
@@ -443,6 +447,85 @@ curl https://imessage-swagger.photon.codes/health
 
 ---
 
+## Find My Friends
+
+Apple's "Find My" location-sharing surfaces here. When a contact shares their location with you (one-time, until end of day, or indefinitely), it shows up in these endpoints. Pair with the [`new-findmy-location`](#live-location-updates) Socket.IO event for near-realtime updates. In typical deployments, the upstream server refreshes Find My data about every 30 seconds.
+
+> **Heads up**: location only appears here for contacts who have *actively shared* with you in the Messages or Find My app. There is no way to query a contact who hasn't shared.
+
+### Find My Friends
+
+List every contact currently sharing their location with you.
+
+```bash
+# Cached
+curl https://imessage-swagger.photon.codes/icloud/friends \
+  -H "Authorization: Bearer $TOKEN"
+
+# Request an upstream refresh before returning
+curl "https://imessage-swagger.photon.codes/icloud/friends?refresh=true" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+`refresh=true` asks the upstream server to refresh Find My data first. If the upstream refresh path is unavailable, the response may still fall back to cached data.
+
+Response:
+
+```json
+{
+  "ok": true,
+  "data": [
+    {
+      "handle": "+14155550123",
+      "coordinates": { "latitude": 37.7749, "longitude": -122.4194 },
+      "longAddress": "1 Market St, San Francisco, CA",
+      "shortAddress": "1 Market St",
+      "title": "San Francisco",
+      "subtitle": "California",
+      "lastUpdated": 1714000000,
+      "isLocating": false,
+      "status": "live",
+      "expiry": 1714003600
+    }
+  ]
+}
+```
+
+`status` values:
+- `live` — actively sharing right now
+- `legacy` — previously shared, last known position
+- `shallow` — partial data (Apple still resolving)
+
+### Get Friend Location
+
+Look up a single handle. Returns `null` if the contact isn't sharing with you.
+
+```bash
+curl https://imessage-swagger.photon.codes/icloud/friends/+14155550123 \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+> Reads from cache. Call `GET /icloud/friends?refresh=true` first if you want the proxy to request a refresh before reading it.
+
+### Sharing Status
+
+Cheap boolean check — useful for gating UI before pulling full coordinates.
+
+```bash
+curl https://imessage-swagger.photon.codes/icloud/friends/+14155550123/sharing \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Response:
+
+```json
+{ "ok": true, "data": { "handle": "+14155550123", "sharing": true } }
+```
+
+> Example: [findmy-friends.sh](./examples/findmy-friends.sh)
+
+---
+
 ## Real-time Events (Socket.IO)
 
 Subscribe to real-time events via Socket.IO:
@@ -472,6 +555,12 @@ socket.on("message-send-error", (data) => {
   console.error("Send failed:", data)
 })
 
+// Friend's location updated (Find My)
+socket.on("new-findmy-location", (loc) => {
+  const { latitude, longitude } = loc.coordinates
+  console.log(`${loc.handle} → ${latitude}, ${longitude}`)
+})
+
 // Other events
 socket.on("typing-indicator", (data) => console.log("Typing:", data))
 socket.on("chat-read-status-changed", (data) => console.log("Read status:", data))
@@ -492,7 +581,24 @@ socket.on("chat-read-status-changed", (data) => console.log("Read status:", data
 - `new-server` - New server connected
 - `incoming-facetime` - Incoming FaceTime call
 - `ft-call-status-changed` - FaceTime call status changed
+- `new-findmy-location` - Friend's Find My location updated (see [Live Location Updates](#live-location-updates))
 - `hello-world` - Connection test event
+
+### Live Location Updates
+
+The `new-findmy-location` event is forwarded when the upstream SDK emits a changed friend location. The payload uses the same camelCase shape as `GET /icloud/friends`:
+
+```javascript
+socket.on("new-findmy-location", (loc) => {
+  const { latitude, longitude } = loc.coordinates
+  console.log(`${loc.handle} is now at ${latitude}, ${longitude}`)
+  console.log(`status: ${loc.status}`)  // live | legacy | shallow
+})
+```
+
+A typical pattern: pull `GET /icloud/friends?refresh=true` once on connect to seed your state, then keep it warm with `new-findmy-location` pushes.
+
+> Example: [findmy-watch.ts](./examples/findmy-watch.ts)
 
 ---
 
