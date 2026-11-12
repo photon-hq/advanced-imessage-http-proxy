@@ -3,7 +3,7 @@
 > A minimal HTTP API proxy for iMessage with multi-server support
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-^5-blue.svg)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](./LICENSE)
 
 Advanced iMessage HTTP Proxy is a RESTful API that proxies requests to Advanced iMessage Kit servers. Perfect for building **web apps**, **automation tools**, and **cross-platform integrations**.
 
@@ -669,4 +669,4 @@ All example scripts are in the [`examples/`](./examples) directory:
 
 ## License
 
-MIT
+Apache-2.0
